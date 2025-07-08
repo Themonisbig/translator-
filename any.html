@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Interactive Amharic Phrasebook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .amharic {
+            font-family: 'Noto Sans Ethiopic', sans-serif;
+            font-size: 1.1rem;
+        }
+        .speakable {
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .speakable:hover {
+            background-color: #dbeafe; /* Tailwind's blue-100 */
+        }
+        .dark .speakable:hover {
+             background-color: #1e40af; /* Tailwind's blue-800 */
+        }
+        .speakable:hover::after {
+            content: '🔊';
+            position: absolute;
+            right: -1.2em;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div id="main-container" class="container mx-auto p-4 sm:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white">Comprehensive Amharic Phrasebook</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Hover over any Amharic phrase to hear it spoken.</p>
+        </header>
+
+        <div class="space-y-8">
+            <!-- Greetings & Farewells -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+                <h2 class="text-2xl font-bold p-4 bg-blue-600 text-white">Greetings & Farewells</h2>
+                <div class="p-4 overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead><tr class="border-b dark:border-gray-700"><th class="p-2">Amharic</th><th class="p-2">Transliteration</th><th class="p-2">English</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ሰላም</span></td><td class="p-2">Selam</td><td class="p-2">Hello / Peace</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">እንደምን ነህ/ነሽ?</span></td><td class="p-2">Endemin neh/nesh?</td><td class="p-2">How are you? (m/f)</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ደህና ነኝ</span></td><td class="p-2">Dehna negn</td><td class="p-2">I am fine</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ስምህ ማን ነው?</span></td><td class="p-2">Simih man new? (m)</td><td class="p-2">What is your name? (m)</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ስሜ ... ነው</span></td><td class="p-2">Sime ... new</td><td class="p-2">My name is ...</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">እንደምን አደሩ</span></td><td class="p-2">Endemin aderru</td><td class="p-2">Good morning</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">እንደምን ዋሉ</span></td><td class="p-2">Endemin walu</td><td class="p-2">Good afternoon</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ደህና እደሩ</span></td><td class="p-2">Dehna ederu</td><td class="p-2">Good night</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ከየት ነህ?</span></td><td class="p-2">Keyet neh? (m)</td><td class="p-2">Where are you from? (m)</td></tr>
+                            <tr><td class="p-2 amharic"><span class="speakable">ቻው</span></td><td class="p-2">Chao</td><td class="p-2">Bye (casual)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Polite Expressions & Basics -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+                <h2 class="text-2xl font-bold p-4 bg-green-600 text-white">Polite Expressions & Basics</h2>
+                <div class="p-4 overflow-x-auto">
+                     <table class="w-full text-left">
+                        <thead><tr class="border-b dark:border-gray-700"><th class="p-2">Amharic</th><th class="p-2">Transliteration</th><th class="p-2">English</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አመሰግናለሁ</span></td><td class="p-2">Ameseginalew</td><td class="p-2">Thank you</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">እባክህ/እባክሽ</span></td><td class="p-2">Ibakih/Ibakish</td><td class="p-2">Please (m/f)</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ይቅርታ</span></td><td class="p-2">Yiqirta</td><td class="p-2">Sorry / Excuse me</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ምንም አይደል</span></td><td class="p-2">Minim aydel</td><td class="p-2">You're welcome</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አዎ</span></td><td class="p-2">Awo</td><td class="p-2">Yes</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አይደለም</span></td><td class="p-2">Aydelem</td><td class="p-2">No</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አልገባኝም</span></td><td class="p-2">Algebagnim</td><td class="p-2">I don't understand</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">በጣም ጥሩ</span></td><td class="p-2">Betam tiru</td><td class="p-2">Very good</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ችግር የለም</span></td><td class="p-2">Chigir yelem</td><td class="p-2">No problem</td></tr>
+                            <tr><td class="p-2 amharic"><span class="speakable">እንግሊዝኛ ይችላሉ?</span></td><td class="p-2">Inglizegna yichilalu?</td><td class="p-2">Do you speak English?</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Shopping & Numbers -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+                <h2 class="text-2xl font-bold p-4 bg-purple-600 text-white">Shopping & Numbers</h2>
+                <div class="p-4 overflow-x-auto">
+                     <table class="w-full text-left">
+                        <thead><tr class="border-b dark:border-gray-700"><th class="p-2">Amharic</th><th class="p-2">Transliteration</th><th class="p-2">English</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ስንት ነው?</span></td><td class="p-2">Sint new?</td><td class="p-2">How much is it?</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">በጣም ውድ ነው</span></td><td class="p-2">Betam wud new</td><td class="p-2">It's too expensive</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ቅናሽ አለ?</span></td><td class="p-2">Qinash ale?</td><td class="p-2">Is there a discount?</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አንድ, ሁለት, ሶስት</span></td><td class="p-2">And, hulet, sost</td><td class="p-2">One, two, three</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አራት, አምስት, ስድስት</span></td><td class="p-2">Arat, amist, sidist</td><td class="p-2">Four, five, six</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ሰባት, ስምንት, ዘጠኝ</span></td><td class="p-2">Sebat, simint, zetegn</td><td class="p-2">Seven, eight, nine</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አስር</span></td><td class="p-2">Asir</td><td class="p-2">Ten</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ሃያ</span></td><td class="p-2">Haya</td><td class="p-2">Twenty</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">መቶ</span></td><td class="p-2">Meto</td><td class="p-2">One hundred</td></tr>
+                            <tr><td class="p-2 amharic"><span class="speakable">ሺህ</span></td><td class="p-2">Shih</td><td class="p-2">One thousand</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Food & Dining -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+                <h2 class="text-2xl font-bold p-4 bg-red-600 text-white">Food & Dining</h2>
+                <div class="p-4 overflow-x-auto">
+                     <table class="w-full text-left">
+                        <thead><tr class="border-b dark:border-gray-700"><th class="p-2">Amharic</th><th class="p-2">Transliteration</th><th class="p-2">English</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ተርቦኛል</span></td><td class="p-2">Terbognal</td><td class="p-2">I am hungry</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ተጠምቶኛል</span></td><td class="p-2">Tetemtognal</td><td class="p-2">I am thirsty</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ምግብ</span></td><td class="p-2">Migib</td><td class="p-2">Food</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ውሃ እፈልጋለሁ</span></td><td class="p-2">Wuha ifeligalehu</td><td class="p-2">I want water</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">በጣም ጣፋጭ ነው</span></td><td class="p-2">Betam tafach new</td><td class="p-2">It's delicious</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ይህን እፈልጋለሁ</span></td><td class="p-2">Yihin ifeligalehu</td><td class="p-2">I want this one</td></tr>
+                            <tr><td class="p-2 amharic"><span class="speakable">ሂሳብ እባክህ</span></td><td class="p-2">Hisab ibakih</td><td class="p-2">The bill, please</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+             <!-- Emergencies -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+                <h2 class="text-2xl font-bold p-4 bg-orange-600 text-white">Emergencies</h2>
+                <div class="p-4 overflow-x-auto">
+                     <table class="w-full text-left">
+                        <thead><tr class="border-b dark:border-gray-700"><th class="p-2">Amharic</th><th class="p-2">Transliteration</th><th class="p-2">English</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">እርዳታ!</span></td><td class="p-2">Irdada!</td><td class="p-2">Help!</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ፖሊስ ጥሩ</span></td><td class="p-2">Police tiru</td><td class="p-2">Call the police</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">አሞኛል</span></td><td class="p-2">Amognal</td><td class="p-2">I am sick</td></tr>
+                            <tr class="border-b dark:border-gray-700"><td class="p-2 amharic"><span class="speakable">ዶክተር እፈልጋለሁ</span></td><td class="p-2">Doctor ifeligalehu</td><td class="p-2">I need a doctor</td></tr>
+                            <tr><td class="p-2 amharic"><span class="speakable">ሆስፒታል የት ነው?</span></td><td class="p-2">Hospital yet new?</td><td class="p-2">Where is the hospital?</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Add Your Own Phrase Section -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+                <h2 class="text-2xl font-bold p-4 bg-gray-700 text-white">Add Your Own Phrase</h2>
+                <div class="p-4">
+                    <form id="custom-phrase-form" class="space-y-4">
+                        <div>
+                            <label for="english-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Enter English Phrase:</label>
+                            <input type="text" id="english-input" class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700" placeholder="e.g., Have a great trip!">
+                        </div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <span id="button-text">Translate & Add</span>
+                            <div id="button-loader" class="hidden loader ml-2"></div>
+                        </button>
+                    </form>
+                    <!-- ** NEW ERROR MESSAGE DIV ** -->
+                    <div id="translation-error" class="hidden mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-md"></div>
+                </div>
+                <div id="custom-phrases-container" class="p-4 pt-0 overflow-x-auto">
+                     <table class="w-full text-left">
+                        <thead id="custom-phrases-header" class="hidden">
+                            <tr class="border-b dark:border-gray-700"><th class="p-2">Amharic</th><th class="p-2">Transliteration</th><th class="p-2">English</th></tr>
+                        </thead>
+                        <tbody id="custom-phrases-body">
+                            <!-- Custom phrases will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Speaks the given text using the Web Speech API.
+         */
+        function speak(text) {
+            if (typeof window.speechSynthesis === 'undefined') {
+                console.warn("Text-to-speech is not supported in this browser.");
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'am-ET';
+            const amharicVoice = window.speechSynthesis.getVoices().find(voice => voice.lang.startsWith('am'));
+            if (amharicVoice) utterance.voice = amharicVoice;
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Use event delegation for speakable elements
+        document.getElementById('main-container').addEventListener('mouseover', (event) => {
+            if (event.target.classList.contains('speakable')) {
+                speak(event.target.textContent);
+            }
+        });
+
+        // Handle the custom phrase form submission
+        const customPhraseForm = document.getElementById('custom-phrase-form');
+        const englishInput = document.getElementById('english-input');
+        const customPhrasesBody = document.getElementById('custom-phrases-body');
+        const customPhrasesHeader = document.getElementById('custom-phrases-header');
+        const buttonText = document.getElementById('button-text');
+        const buttonLoader = document.getElementById('button-loader');
+        const translationErrorDiv = document.getElementById('translation-error');
+
+        customPhraseForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const englishText = englishInput.value.trim();
+            if (!englishText) return;
+
+            // Reset UI states
+            translationErrorDiv.classList.add('hidden');
+            buttonText.textContent = 'Translating...';
+            buttonLoader.classList.remove('hidden');
+            englishInput.disabled = true;
+
+            try {
+                const amharicText = await translateText(englishText);
+                addCustomPhrase(amharicText, englishText);
+                englishInput.value = ''; // Clear input
+            } catch (error) {
+                console.error("Translation failed:", error);
+                // ** UPDATED ERROR HANDLING **
+                translationErrorDiv.textContent = `Translation failed. The most common cause is an API key issue with the hosting provider. Details: ${error.message}`;
+                translationErrorDiv.classList.remove('hidden');
+            } finally {
+                // Hide loading state
+                buttonText.textContent = 'Translate & Add';
+                buttonLoader.classList.add('hidden');
+                englishInput.disabled = false;
+            }
+        });
+
+        /**
+         * Adds a new row to the custom phrases table.
+         */
+        function addCustomPhrase(amharicText, englishText) {
+            if (customPhrasesHeader.classList.contains('hidden')) {
+                customPhrasesHeader.classList.remove('hidden');
+            }
+            const row = document.createElement('tr');
+            row.className = 'border-b dark:border-gray-700';
+            row.innerHTML = `
+                <td class="p-2 amharic"><span class="speakable">${amharicText}</span></td>
+                <td class="p-2 text-gray-500 italic">—</td>
+                <td class="p-2">${englishText}</td>
+            `;
+            customPhrasesBody.appendChild(row);
+        }
+
+        /**
+         * Calls the Gemini API to get a simple translation.
+         */
+        async function translateText(text) {
+            const prompt = `Translate the following English text to Amharic. Only return the translated text, with no additional explanation or introductory phrases. Text: "${text}"`;
+            
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }]
+            };
+            const apiKey = "AIzaSyBPpAtVF6fA3V9cUwGCOCV6YJLWYW2pmHo"; // API key is now set
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                 if (response.status === 401) {
+                    throw new Error("Authentication failed (401).");
+                }
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                return result.candidates[0].content.parts[0].text.trim().replace(/^"|"$/g, '');
+            } else {
+                 if (result.promptFeedback && result.promptFeedback.blockReason) {
+                    throw new Error(`Request blocked by API. Reason: ${result.promptFeedback.blockReason}`);
+                }
+                throw new Error("Could not extract translated text from the API response.");
+            }
+        }
+
+        // Ensure voices are loaded for speech synthesis
+        window.speechSynthesis.onvoiceschanged = () => {};
+    </script>
+</body>
+</html>
