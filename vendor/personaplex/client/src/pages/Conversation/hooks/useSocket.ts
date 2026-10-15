@@ -14,6 +14,7 @@ export const useSocket = ({
   const lastMessageTime = useRef<null|number>(null);
   const socketRef = useRef<WebSocket | null>(null); // useRef to keep stable socket reference
   const [socketStatus, setSocketStatus] = useState<SocketStatus>("disconnected");
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const sendMessage = useCallback(
     (message: WSMessage) => {
@@ -39,6 +40,7 @@ export const useSocket = ({
       console.log("disconnected (current socket)");
       socketRef.current = null;
       setSocketStatus("disconnected");
+      setConnectionError(event.reason || `Conversation connection closed (code ${event.code}). Reload this page to sign in again. If it repeats, share this error code.`);
       onDisconnectProp?.();
     } else {
       console.log("disconnected (stale socket ignored)");
@@ -69,6 +71,7 @@ export const useSocket = ({
       socketRef.current.close();
     }
     setSocketStatus("connecting");
+    setConnectionError(null);
     const ws = new WebSocket(uri);
     const handshakeTimeout = window.setTimeout(() => ws.close(), 120000);
     ws.addEventListener("message", () => window.clearTimeout(handshakeTimeout), { once: true });
@@ -117,6 +120,7 @@ export const useSocket = ({
 
   return {
     socketStatus,
+    connectionError,
     socket: socketRef.current,
     sendMessage,
     start,

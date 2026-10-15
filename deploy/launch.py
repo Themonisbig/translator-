@@ -25,6 +25,9 @@ async def main():
     children = [await asyncio.create_subprocess_exec(*command),
                 await asyncio.create_subprocess_exec(sys.executable, "/app/deploy/gateway.py")]
     tasks = [asyncio.create_task(p.wait()) for p in children]
+    smoke = None
+    if os.environ.get("RUN_GPU_SMOKE") == "1":
+        smoke = await asyncio.create_subprocess_exec(sys.executable, "/app/deploy/gpu_smoke.py")
     loop = asyncio.get_running_loop()
     def stop():
         for p in children:
@@ -37,6 +40,9 @@ async def main():
         code = next(iter(done)).result()
     finally:
         stop()
+        if smoke is not None and smoke.returncode is None:
+            smoke.terminate()
+            await smoke.wait()
         try:
             await asyncio.wait_for(asyncio.gather(*tasks), timeout=15)
         except asyncio.TimeoutError:

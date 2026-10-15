@@ -160,3 +160,22 @@ docker build --build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY
 If the build daemon cannot resolve the proxy hostname, configure the builder's
 network/DNS using the platform-provided proxy address. Never disable TLS, npm
 integrity checks or package signature verification.
+
+## Gateway origin and browser session
+
+Set `PUBLIC_ORIGIN` to the exact public HTTPS origin when using a reverse proxy.
+On RunPod the gateway also derives the default from `RUNPOD_POD_ID` and HTTP port
+8080. Origin checking uses that public address rather than an internal rewritten
+Host header. HTTP Basic login establishes a signed, HttpOnly, SameSite=Strict
+session cookie (Secure over HTTPS), allowing the WebSocket to authenticate even
+when the browser or proxy omits its Basic header. Sessions expire after one hour
+and are invalidated when the gateway restarts. Reload the page to log in again.
+
+For an opt-in deployment test, set `RUN_GPU_SMOKE=1` in the Pod environment. After
+readiness, this checks the public HTTPS login/session and streams the checked-in
+NVIDIA input WAV through WSS at real-time cadence. It verifies generated Opus
+audio decodes to non-silent PCM, text is returned, and output arrives while input
+is streaming. It logs `GPU_SMOKE_RESULT` without credentials or conversation
+contents. Allow about a minute after model warmup before starting your own
+conversation. A passing fixture test does not establish physical microphone
+compatibility or the quality of interruption handling.

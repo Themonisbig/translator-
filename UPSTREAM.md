@@ -25,3 +25,9 @@ Container compatibility correction: PyTorch's 2.4.1 CUDA base image contains
 The Dockerfile reinstalls the supported PyPI `ninja==1.11.1.3` wheel, retaining
 dependency checks and all signature/TLS verification. No model dependency
 constraints were changed.
+
+Gateway fixes after the first browser attempt: use the configured public origin
+across proxy Host rewriting and authenticate browser WebSockets with a signed
+HttpOnly session cookie. Added a real-browser reverse-proxy regression test.
+`deploy/gpu_smoke.py` optionally streams NVIDIA's official input WAV through the
+actual deployed HTTPS/WSS GPU service; it is a client test, not a model substitute.

@@ -24,6 +24,7 @@ RUN --mount=type=secret,id=build_ca \
     pip install --no-cache-dir /app/moshi && pip check && python -m moshi.server --help > /dev/null && rm -f /tmp/build-ca.pem
 COPY --from=browser /client/dist /app/client/dist
 COPY deploy/ /app/deploy/
+COPY vendor/personaplex/assets/test/input_assistant.wav /app/smoke/input_assistant.wav
 ENV HF_HOME=/workspace/huggingface PYTHONUNBUFFERED=1 WEB_USERNAME=persona
 EXPOSE 8080
 HEALTHCHECK --interval=30s --start-period=20m --timeout=5s CMD curl -fsS http://127.0.0.1:8080/healthz || exit 1

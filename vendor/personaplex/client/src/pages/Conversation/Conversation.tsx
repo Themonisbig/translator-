@@ -129,7 +129,7 @@ export const Conversation:FC<ConversationProps> = ({
     worklet.current?.port.postMessage({ type: "reset" });
   }, [setIsOver, worklet]);
 
-  const { socketStatus, sendMessage, socket, start, stop } = useSocket({
+  const { socketStatus, connectionError, sendMessage, socket, start, stop } = useSocket({
     // onMessage,
     uri: WSURL,
     onDisconnect,
@@ -252,7 +252,7 @@ export const Conversation:FC<ConversationProps> = ({
           <div className={`h-4 w-4 rounded-full ${socketColor}`} />
           <span role="status">{socketStatus}</span>
         </div>
-        {isOver && <p role="alert" className="text-center p-2">Conversation stopped or connection lost. If unexpected, check model readiness, your network, and RunPod logs. Start a new conversation to retry or change voice and personality.</p>}
+        {isOver && <p role="alert" className="text-center p-2">{connectionError || "Conversation stopped. Start a new conversation to change voice or personality."}</p>}
         {audioContext.current && worklet.current && <MediaContext.Provider value={
           {
             startRecording,
