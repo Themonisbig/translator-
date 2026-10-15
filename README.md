@@ -7,16 +7,22 @@ mock voice backend, or client-side model is used.
 
 ## Current status
 
+- **Deployed:** https://0gsotvofrwom53-8080.proxy.runpod.net — sign in as `persona`
+  with your existing RunPod `personaplex_web` password. Refresh after updates.
+- **Real GPU streaming passed:** public HTTPS login, session-cookie WSS, and the
+  official audio fixture produced 47.76 seconds of decoded, non-silent audio and
+  466 text characters. Output arrived while input was streaming. See
+  [deployment status](deploy/STATUS.md) and [test results](deploy/last-gpu-check.json).
 - Original official browser demo: production build passed.
 - Adapted browser: TypeScript/production build passed; desktop and mobile-width
   browser checks cover all 18 voices, energetic personality selection, layout,
   and microphone-denied errors.
-- CPU integration tests cover authentication, readiness, binary WebSocket
-  forwarding, disconnect cleanup, input validation, and deployment planning.
-- **Not deployed. No GPU inference, live generated audio, interruption behavior,
-  or real mobile microphone session has been validated.** RunPod credentials,
-  account billing, Hugging Face license acceptance and remote secret bindings
-  are prerequisites. Do not interpret CPU transport fixtures as model validation.
+- Sixteen CPU integration checks cover authentication, readiness, binary WebSocket
+  forwarding, proxy Host rewriting, session cookies, input validation and deployment
+  planning. A real-browser proxy test covers microphone packets and stop controls.
+- Physical-device microphone conversations, subjective voice quality, natural
+  interruption handling and physical-mobile playback still need user testing.
+  CPU transport fixtures and prerecorded GPU tests do not establish those behaviors.
 - See [deployment instructions](deploy/RUNPOD.md) and [provenance](UPSTREAM.md).
 
 ## Deploy
@@ -57,6 +63,7 @@ pip install -r requirements-dev.txt
 bash scripts/check.sh
 python -m playwright install chromium
 python tests/browser_check.py
+python tests/browser_gateway_check.py
 python scripts/runpod_setup.py  # offline dry run; no charges
 ```
 
