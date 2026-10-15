@@ -38,11 +38,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/themonisbig/personaplex-voice:main,ghcr.io/themonisbig/personaplex-voice:${{ github.sha }}
-          labels: org.opencontainers.image.source=https://github.com/Themonisbig/translator-
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build and optionally publish image
+        env:
+          PUBLISH_IMAGE: ${{ github.event_name != 'pull_request' }}
+          IMAGE_SHA: ${{ github.sha }}
+        run: bash scripts/build_image.sh
