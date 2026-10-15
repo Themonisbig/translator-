@@ -144,3 +144,19 @@ Do not label full-duplex audio working until these tests pass on a GPU.
 - Stop the Pod in RunPod after testing to stop GPU charges. Storage may still incur
   charges while stopped. Terminate/delete only after preserving any wanted cache or
   recordings and reviewing what storage will be destroyed.
+
+## Builds behind an enterprise TLS proxy
+
+Normal cloud builders need no special flags. In a restricted environment, pass the
+platform's trusted public CA certificate through the optional BuildKit `build_ca`
+secret and forward the supported proxy variables. This preserves certificate
+verification and does not embed proxy credentials or the extra CA in the image:
+
+```bash
+docker build --build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY \
+  --secret id=build_ca,src=/path/to/trusted-proxy-ca.crt -t personaplex-voice .
+```
+
+If the build daemon cannot resolve the proxy hostname, configure the builder's
+network/DNS using the platform-provided proxy address. Never disable TLS, npm
+integrity checks or package signature verification.

@@ -20,7 +20,7 @@ RUN --mount=type=secret,id=build_ca \
       cat /etc/ssl/certs/ca-certificates.crt /run/secrets/build_ca > /tmp/build-ca.pem; \
       export PIP_CERT=/tmp/build-ca.pem; \
     fi; \
-    pip install --no-cache-dir /app/moshi && pip check && rm -f /tmp/build-ca.pem
+    pip install --no-cache-dir /app/moshi && pip check && python -m moshi.server --help > /dev/null && rm -f /tmp/build-ca.pem
 COPY --from=browser /client/dist /app/client/dist
 COPY deploy/ /app/deploy/
 ENV HF_HOME=/workspace/huggingface PYTHONUNBUFFERED=1 WEB_USERNAME=persona

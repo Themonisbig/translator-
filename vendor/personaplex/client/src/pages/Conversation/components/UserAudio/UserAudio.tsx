@@ -32,7 +32,7 @@ export const UserAudio: FC<UserAudioProps> = ({theme}) => {
     [sendMessage, socketStatus],
   );
 
-  const { startRecordingUser, stopRecording } = useUserAudio({
+  const { startRecordingUser, stopRecording, error } = useUserAudio({
     constraints: {
       audio: {
         echoCancellation: true,
@@ -66,6 +66,7 @@ export const UserAudio: FC<UserAudioProps> = ({theme}) => {
 
   return (
     <div className="user-audio h-5/6 aspect-square" ref={containerRef}>
+      {error && <p role="alert">Microphone failed: {error}. Check browser permission and audio-device availability, then start a new conversation.</p>}
       <ClientVisualizer theme={theme} analyser={analyser} parent={containerRef}/>
     </div>
   );

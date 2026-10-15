@@ -126,7 +126,8 @@ export const Conversation:FC<ConversationProps> = ({
     setIsOver(true);
     console.log("on disconnect!");
     stopRecording();
-  }, [setIsOver]);
+    worklet.current?.port.postMessage({ type: "reset" });
+  }, [setIsOver, worklet]);
 
   const { socketStatus, sendMessage, socket, start, stop } = useSocket({
     // onMessage,
@@ -205,6 +206,7 @@ export const Conversation:FC<ConversationProps> = ({
         audioContext.current?.resume();
         stop();
         stopRecording();
+        worklet.current?.port.postMessage({ type: "reset" });
         setIsOver(true);
       }
     }, [socketStatus, isOver, start, stop]);

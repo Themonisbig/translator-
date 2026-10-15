@@ -16,4 +16,6 @@ RunPod provisioning payload follows official runpod/runpod-python SDK source,
 commit `1d7ae99f4e478fa932ec616b0ac7fe18998a78c6`, specifically
 runpod/api/ctl_commands.py:create_pod and runpod/api/rest.py.
 It uses the current `/v2/pods` API at api.runpod.io, not older REST v1 examples.
-The live RunPod API and secret interpolation remain unvalidated without access.
+Secret-reference syntax was also verified against
+https://docs.runpod.io/pods/templates/secrets. Actual provisioning and secret
+resolution remain unvalidated without credentials.

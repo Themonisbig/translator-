@@ -35,6 +35,7 @@ export const useUserAudio = ({
   //TODO: Fix any type for recorder
   const recorder = useRef<any>(null);
   const activeStream = useRef<MediaStream | null>(null);
+  const captureGeneration = useRef(0);
 
   const getMediaStream = useCallback(async () => {
     setStatus(UserMediaStatuses.WAITING_FOR_PERMISSION);
@@ -53,7 +54,12 @@ export const useUserAudio = ({
 
   const startRecordingUser = useCallback(async () => {
     console.log(Date.now() % 1000, "Starting recording in user audio");
+    const generation = ++captureGeneration.current;
     const mediaStream = await getMediaStream();
+    if (generation !== captureGeneration.current) {
+      mediaStream?.getTracks().forEach(track => track.stop());
+      return;
+    }
     if (mediaStream) {
       const analyser = audioContext.current.createAnalyser();
       const source = audioContext.current.createMediaStreamSource(mediaStream);
@@ -127,6 +133,7 @@ export const useUserAudio = ({
 
   const stopRecording = useCallback(() => {
     setStatus(UserMediaStatuses.STOPPING);
+    captureGeneration.current++;
     activeStream.current?.getTracks().forEach(track => track.stop());
     activeStream.current = null;
     if (recorder.current) {
