@@ -19,3 +19,9 @@ It uses the current `/v2/pods` API at api.runpod.io, not older REST v1 examples.
 Secret-reference syntax was also verified against
 https://docs.runpod.io/pods/templates/secrets. Actual provisioning and secret
 resolution remain unvalidated without credentials.
+
+Container compatibility correction: PyTorch's 2.4.1 CUDA base image contains
+`ninja 1.11.1.1` wheel metadata that fails `pip check` on the Linux build runner.
+The Dockerfile reinstalls the supported PyPI `ninja==1.11.1.3` wheel, retaining
+dependency checks and all signature/TLS verification. No model dependency
+constraints were changed.
