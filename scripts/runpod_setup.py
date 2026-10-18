@@ -18,7 +18,7 @@ def secret_ref(name):
 COMPATIBLE_GPUS = ("NVIDIA RTX 6000 Ada Generation", "NVIDIA L40", "NVIDIA L40S")
 
 
-def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web_secret="personaplex_web", cloud="COMMUNITY"):
+def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web_secret="personaplex_web", cloud="COMMUNITY", forward_compat=False):
     if not re.fullmatch(r"[a-z0-9][a-z0-9./_-]*(?::[A-Za-z0-9_.-]+|@sha256:[a-f0-9]{64})", image):
         raise ValueError("Supply a tagged or digest-pinned registry image, without credentials")
     if gpu not in COMPATIBLE_GPUS:
@@ -30,9 +30,15 @@ def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web
            "FISH_DRAMA3_FP8_EXPERTS": "1", "RUN_GPU_SMOKE": "1"}
     if hf_secret:
         env["HF_TOKEN"] = secret_ref(hf_secret)
+    if forward_compat:
+        if gpu not in ("NVIDIA L40", "NVIDIA L40S"):
+            raise ValueError("This forward-compatibility setup is supported for datacenter L40/L40S only")
+        # The official CUDA 12.8 image includes cuda-compat-12-8 and explicitly
+        # permits R550 drivers. Prefer its userspace driver without changing host drivers.
+        env["LD_LIBRARY_PATH"] = "/usr/local/cuda/compat:/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64"
     return {
         "name": "fish-drama3-tts", "image": image, "cloud": cloud, "startSsh": False,
-        "gpu": {"id": gpu, "count": 1, "minRamPerGpu": 64, "minVcpuCountPerGpu": 8, "minCudaVersion": "12.8"},
+        "gpu": {"id": gpu, "count": 1, "minRamPerGpu": 64, "minVcpuCountPerGpu": 8, "minCudaVersion": "12.4" if forward_compat else "12.8"},
         "disk": 40, "mounts": {"persistent": {"size": 80, "path": "/workspace"}},
         "ports": ["8080/http"], "env": env,
     }
@@ -86,6 +92,7 @@ def main(argv=None):
     parser.add_argument("--cloud", default="COMMUNITY", choices=("COMMUNITY", "SECURE"))
     parser.add_argument("--hf-secret", default="personaplex_hf", help="Existing optional HF secret name; empty disables it")
     parser.add_argument("--web-secret", default="personaplex_web", help="Existing web password secret; values never enter the image")
+    parser.add_argument("--cuda-forward-compat", action="store_true", help="L40/L40S: use the official CUDA image compatibility libraries on R550/CUDA 12.4 hosts")
     parser.add_argument("--max-hourly", type=float, default=0.50, help="USD GPU ceiling, excludes storage; checked before creation")
     parser.add_argument("--create", action="store_true", help="Create one billable Pod; default is dry run")
     parser.add_argument("--accept-billing", action="store_true", help="Acknowledge separate GPU and storage charges")
@@ -103,7 +110,7 @@ def main(argv=None):
         print(json.dumps({k: pod.get(k) for k in ("id", "name", "status", "costPerHr")}, indent=2))
         print(f"Expected proxy URL (verify in RunPod Connect): https://{args.status}-8080.proxy.runpod.net")
         return 0
-    payload = build_payload(args.image, args.gpu, args.hf_secret, args.web_secret, args.cloud)
+    payload = build_payload(args.image, args.gpu, args.hf_secret, args.web_secret, args.cloud, args.cuda_forward_compat)
     if args.quote:
         print(f"Current available GPU quote: ${hourly_quote(token, args.gpu, args.cloud):.2f}/hour, plus storage.")
         return 0

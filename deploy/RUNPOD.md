@@ -6,7 +6,13 @@ Use one **NVIDIA RTX 6000 Ada Generation**, **L40**, or **L40S**, with 48GB VRAM
 at least 64GB host RAM and 8 vCPUs. Drama 3's official FP8 kernels require SM89+.
 A40 and RTX A6000 are SM86 and cannot run this single-GPU configuration.
 Python 3.12 / Torch 2.8 / CUDA 12.8 follow the official dependency lockfile.
-The setup also requires a host reporting CUDA 12.8 or newer.
+By default, the setup requires a host reporting CUDA 12.8 or newer. For datacenter
+L40/L40S on R550/CUDA 12.4 hosts, `--cuda-forward-compat` selects the official
+`cuda-compat-12-8` userspace driver already included by NVIDIA's base image, via
+`/usr/local/cuda/compat`. NVIDIA's image driver checks remain enabled; no host
+driver is changed. This option is restricted to L40/L40S, and real GPU testing is
+still required. The default stock catalog view describes Secure Cloud; availability
+must be scoped to `cloud=COMMUNITY` and the actual CUDA constraint.
 Do not enable `--compile` for Drama 3.
 
 On 2026-10-18, the lowest available compatible Community GPU quote was
@@ -54,7 +60,7 @@ rate, create exactly one Pod (example ceiling, not an authorization):
 ```bash
 python scripts/runpod_setup.py \
   --image ghcr.io/themonisbig/personaplex-voice:COMMIT_SHA \
-  --gpu 'NVIDIA L40S' \
+  --gpu 'NVIDIA L40S' --cuda-forward-compat \
   --max-hourly 0.79 --create --accept-billing
 ```
 
