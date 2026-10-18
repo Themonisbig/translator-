@@ -34,7 +34,7 @@ async def main():
     if not (checkpoint / "codec.pth").is_file():
         raise RuntimeError("Pinned model snapshot is missing codec.pth")
     os.environ["FISH_DRAMA3_FP8_EXPERTS"] = "1"
-    command = [sys.executable, "tools/api_server.py", "--listen", "127.0.0.1:8090",
+    command = [sys.executable, "/app/deploy/api_server.py", "--listen", "127.0.0.1:8090",
                "--llama-checkpoint-path", str(checkpoint), "--device", "cuda:0",
                "--max-text-length", os.environ.get("MAX_TEXT_LENGTH", "5000"), "--workers", "1"]
     children = []

@@ -8,10 +8,13 @@ at **$0.82/hour**. Attached storage: 80GB persistent plus 40GB container disk, a
 about $0.017/hour while running (roughly $0.84/hour total). GPU billing is active.
 
 Native host CUDA: **13.0**, meeting the image's CUDA 12.8 requirement. Host RAM:
-250GB; vCPUs: 32. The Pod is pulling its image, then will download the official model
-and warm up. Do not create duplicates while this one starts.
+250GB; vCPUs: 32. The pinned official model is downloaded and loads on CUDA.
+Initial public HTTPS requests generated audio tokens but failed during GPU DAC
+decoding with out-of-memory errors at 1024 frames, with graphs enabled and disabled.
+The deployment is now testing official DAC CPU FP32 decoding, retaining the speech
+model and audio-token tower on CUDA. Do not create duplicate Pods.
 
-Expected browser address (not yet validated):
+Browser address (login and UI validated; successful speech still pending):
 https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui
 
 Login: `persona` with your existing RunPod `personaplex_web` password.
@@ -24,8 +27,8 @@ CUDA support and the normal NVIDIA driver path.
 
 Verified without a GPU:
 
-- 17 CPU tests passed: secure login/session cookies, proxy origins, streaming audio,
-  JSON/multipart uploads, GPU guards, stock filtering and spending ceilings.
+- 20 CPU tests passed: secure login/session cookies, proxy origins, streaming audio,
+  JSON/multipart uploads, GPU guards, stock filtering, spending ceilings and codec placement.
 - Official UI TypeScript/Vite production build passed.
 - Chromium at 1280px and 390px passed login, generation POST, test-tone WAV playback,
   downloads and visible errors. These are fixtures, not model inference.

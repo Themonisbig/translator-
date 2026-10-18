@@ -30,11 +30,14 @@ RUN --mount=type=secret,id=build_ca \
     rm -f /tmp/build-ca.pem
 ENV PATH="/app/fish-speech/.venv/bin:$PATH" \
     HF_HOME=/workspace/huggingface WEB_USERNAME=persona \
-    MODEL_DIR=/workspace/checkpoints/drama-3 FISH_DRAMA3_FP8_EXPERTS=1
+    MODEL_DIR=/workspace/checkpoints/drama-3 FISH_DRAMA3_FP8_EXPERTS=1 \
+    FISH_CODEC_DEVICE=cpu FISH_CPU_THREADS=8 FISH_DRAMA3_CUDA_GRAPH=1 \
+    PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 COPY --from=browser /webui/dist /app/fish-speech/awesome_webui/dist
 COPY deploy/ /app/deploy/
 # Imports and CLI parsing must work without a GPU or model download during build.
 RUN python /app/deploy/check_runtime.py && python tools/api_server.py --help > /dev/null && \
+    python /app/deploy/api_server.py --help > /dev/null && \
     python -c "import aiohttp; from fish_speech.models.text2semantic.fish_omni.model import FishOmniModel"
 EXPOSE 8080
 HEALTHCHECK --interval=30s --start-period=30m --timeout=5s CMD curl -fsS http://127.0.0.1:8080/healthz || exit 1

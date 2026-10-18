@@ -22,7 +22,10 @@ expanding beyond this private demo. “Open weights” does not mean unrestricte
 
 Our changes are only the Docker wrapper, authenticated HTTP gateway, lifecycle,
 RunPod setup, documentation and tests. Upstream speech inference and browser UI
-are unchanged. `deploy/check_runtime.py` honors the one protobuf constraint override
+are unchanged. `deploy/api_server.py` selects CPU placement for the official DAC
+codec in FP32 on 48GB hosts; the Drama 3 backbone and tower remain on CUDA. This keeps
+long-clip decoding activations out of GPU memory without changing the model or
+codec implementation. `deploy/check_runtime.py` honors the one protobuf constraint override
 explicitly present in the official project, and rejects other missing/conflicting
 runtime dependencies.
 

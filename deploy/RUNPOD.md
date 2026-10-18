@@ -12,6 +12,15 @@ failed CUDA initialization with both its host driver and compatibility libraries
 That Pod and its empty storage were deleted. Do not rely on that configuration.
 Do not enable `--compile` for Drama 3.
 
+The 48GB profile uses `FISH_CODEC_DEVICE=cpu` and `FISH_CPU_THREADS=8`: the small
+official DAC audio codec runs in FP32 on the cloud host CPU, while Drama 3's FP8 backbone
+and audio-token tower stay on CUDA with graphs enabled. The deployment adapter
+only selects codec placement/precision; upstream source and model weights remain unchanged.
+Full 1024-frame audio decoding exhausted L40 VRAM when the codec shared the GPU,
+including with CUDA graphs disabled. CPU decoding avoids that GPU activation peak
+at the cost of extra decoding time. `FISH_CODEC_DEVICE=cuda` is available for GPUs
+with sufficient additional VRAM; it is not the default 48GB configuration.
+
 On 2026-10-18, a native-compatible **Secure Cloud L40** was available at
 **$0.82/hour GPU**, with host CUDA 13.2, 250GB host RAM and 32 vCPUs. The user has explicitly approved up to $0.82/hour GPU plus storage.
 Capacity fluctuated; a Secure L40 in US-KS-2 was subsequently allocated with native
