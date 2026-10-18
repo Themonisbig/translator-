@@ -20,7 +20,7 @@ def validate_gpu(torch):
 
 async def main():
     password = os.environ.get("WEB_PASSWORD", "")
-    if len(password) < 16 or password.startswith("{{"):
+    if os.environ.get("WEB_AUTH_REQUIRED", "1") != "0" and (len(password) < 16 or password.startswith("{{")):
         raise SystemExit("Bind WEB_PASSWORD to the existing RunPod web secret (at least 16 characters).")
     import torch
     validate_gpu(torch)

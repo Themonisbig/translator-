@@ -4,6 +4,7 @@ The backend returns a WAV test tone, not AI-generated speech. GPU validation is 
 import asyncio
 import io
 import math
+import os
 import shutil
 import struct
 import sys
@@ -33,6 +34,7 @@ def test_wav():
 
 
 async def main():
+    auth_required = os.environ.get("TEST_PUBLIC") != "1"
     requests = []
     fail = False
     async def defaults(request):
@@ -70,7 +72,8 @@ async def main():
         frontend = TestServer(proxy_app)
         await frontend.start_server()
         origin = str(frontend.make_url("/")).rstrip("/")
-        gateway = TestServer(create_app("persona", PASSWORD, str(upstream.make_url("/")).rstrip("/"), origin))
+        gateway = TestServer(create_app("persona", PASSWORD, str(upstream.make_url("/")).rstrip("/"), origin,
+                                        auth_required=auth_required))
         await gateway.start_server()
         try:
             async with async_playwright() as p:
@@ -80,12 +83,15 @@ async def main():
                 browser = await p.chromium.launch(**options)
                 try:
                     for width in (1280, 390):
-                        context = await browser.new_context(http_credentials={"username": "persona", "password": PASSWORD},
-                                                            viewport={"width": width, "height": 900}, accept_downloads=True)
+                        credentials = {"http_credentials": {"username": "persona", "password": PASSWORD}} if auth_required else {}
+                        context = await browser.new_context(**credentials, viewport={"width": width, "height": 900}, accept_downloads=True)
                         page = await context.new_page()
                         errors = []
                         page.on("pageerror", lambda error: errors.append(str(error)))
-                        await page.goto(origin)
+                        response = await page.goto(origin)
+                        if not auth_required:
+                            assert response.status == 200 and "www-authenticate" not in response.headers
+                            assert await context.cookies() == []
                         await page.get_by_label("Input Text", exact=True).fill("[excited] Hello from the browser test!")
                         await page.get_by_role("radio", name="wav", exact=True).click()
                         await page.get_by_role("button", name="Generate Audio", exact=True).click()
@@ -107,7 +113,8 @@ async def main():
                         fail = False
                         assert not errors, errors
                         await context.close()
-                        print(f"PASS official Fish UI ({width}px): login cookie, rewritten Host, POST, WAV playback/download, visible failure")
+                        mode = "login cookie" if auth_required else "no login or cookies"
+                        print(f"PASS official Fish UI ({width}px): {mode}, rewritten Host, POST, WAV playback/download, visible failure")
                 finally:
                     await browser.close()
         finally:

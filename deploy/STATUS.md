@@ -5,7 +5,9 @@ speech on the cloud GPU. PersonaPlex has been replaced.
 
 **Open the private demo:** https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui
 
-Sign in as **persona** using the existing RunPod `personaplex_web` password.
+The user has authorized removing login. The deployment is being updated to
+`WEB_AUTH_REQUIRED=0`; anyone with this URL can use the paid GPU. Existing secret
+bindings are retained for optional password protection later.
 Enter a short sentence, select **wav**, then **Generate Audio** and play the result.
 For expressive speech try `[excited] Wow, this is amazing! I am so happy today!`.
 Voice references with exact transcripts are supported by the official UI.

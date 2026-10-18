@@ -18,7 +18,7 @@ def secret_ref(name):
 COMPATIBLE_GPUS = ("NVIDIA RTX 6000 Ada Generation", "NVIDIA L40", "NVIDIA L40S")
 
 
-def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web_secret="personaplex_web", cloud="COMMUNITY"):
+def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web_secret="personaplex_web", cloud="COMMUNITY", auth_required=True):
     if not re.fullmatch(r"[a-z0-9][a-z0-9./_-]*(?::[A-Za-z0-9_.-]+|@sha256:[a-f0-9]{64})", image):
         raise ValueError("Supply a tagged or digest-pinned registry image, without credentials")
     if gpu not in COMPATIBLE_GPUS:
@@ -32,6 +32,9 @@ def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web
            "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True", "RUN_GPU_SMOKE": "1"}
     if hf_secret:
         env["HF_TOKEN"] = secret_ref(hf_secret)
+    env["WEB_AUTH_REQUIRED"] = "1" if auth_required else "0"
+    if not auth_required:
+        env.pop("WEB_PASSWORD")
     return {
         "name": "fish-drama3-tts", "image": image, "cloud": cloud, "startSsh": False,
         "gpu": {"id": gpu, "count": 1, "minRamPerGpu": 64, "minVcpuCountPerGpu": 8, "minCudaVersion": "12.8"},
@@ -93,6 +96,7 @@ def main(argv=None):
     parser.add_argument("--cloud", default="SECURE", choices=("COMMUNITY", "SECURE"))
     parser.add_argument("--hf-secret", default="personaplex_hf", help="Existing optional HF secret name; empty disables it")
     parser.add_argument("--web-secret", default="personaplex_web", help="Existing web password secret; values never enter the image")
+    parser.add_argument("--no-login", action="store_true", help="Allow anyone with the HTTPS URL to use your paid GPU without a login")
     parser.add_argument("--max-hourly", type=float, default=0.50, help="USD GPU ceiling, excludes storage; checked before creation")
     parser.add_argument("--create", action="store_true", help="Create one billable Pod; default is dry run")
     parser.add_argument("--accept-billing", action="store_true", help="Acknowledge separate GPU and storage charges")
@@ -110,7 +114,7 @@ def main(argv=None):
         print(json.dumps({k: pod.get(k) for k in ("id", "name", "status", "cost")}, indent=2))
         print(f"Expected proxy URL (verify in RunPod Connect): https://{args.status}-8080.proxy.runpod.net")
         return 0
-    payload = build_payload(args.image, args.gpu, args.hf_secret, args.web_secret, args.cloud)
+    payload = build_payload(args.image, args.gpu, args.hf_secret, args.web_secret, args.cloud, not args.no_login)
     if args.quote:
         print(f"Current available GPU quote: ${hourly_quote(token, args.gpu, args.cloud):.2f}/hour, plus storage.")
         return 0
@@ -126,7 +130,9 @@ def main(argv=None):
         raise RuntimeError("RunPod response lacked a valid Pod ID; inspect the console before retrying")
     print("Created Pod:", pod_id)
     print(f"Expected proxy URL (not yet validated): https://{pod_id}-8080.proxy.runpod.net/ui")
-    print("First load downloads about 40GB. Wait for /healthz ready, then sign in as persona with your existing web password.")
+    print("First load downloads about 40GB. Wait for /healthz ready.")
+    print("Browser access: no login; anyone with the URL can use this GPU." if args.no_login else
+          "Sign in as persona with your existing web password.")
     print("Stop ends GPU charges; terminate/delete the Pod to remove its attached paid storage too.")
     return 0
 

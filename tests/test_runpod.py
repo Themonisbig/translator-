@@ -6,6 +6,11 @@ IMAGE = "ghcr.io/themonisbig/personaplex-voice:" + "a" * 40
 
 
 class RunPodTests(unittest.TestCase):
+    def test_public_mode_omits_unused_password_binding(self):
+        payload = build_payload(IMAGE, auth_required=False)
+        self.assertEqual(payload["env"]["WEB_AUTH_REQUIRED"], "0")
+        self.assertNotIn("WEB_PASSWORD", payload["env"])
+
     def test_reuses_only_secret_references_and_private_model_server(self):
         payload = build_payload(IMAGE)
         self.assertEqual(payload["env"]["WEB_PASSWORD"], "{{ RUNPOD_SECRET_personaplex_web }}")

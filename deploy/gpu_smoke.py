@@ -11,6 +11,7 @@ async def run():
     import numpy as np
     import soundfile as sf
     from aiohttp import BasicAuth, ClientSession, ClientTimeout
+    auth_required = os.environ.get("WEB_AUTH_REQUIRED", "1") != "0"
     origin = os.environ.get("PUBLIC_ORIGIN") or f"https://{os.environ['RUNPOD_POD_ID']}-8080.proxy.runpod.net"
     async with ClientSession(timeout=ClientTimeout(total=600)) as client:
         deadline = time.monotonic() + 1800
@@ -24,20 +25,22 @@ async def run():
             if time.monotonic() >= deadline:
                 raise RuntimeError("readiness_timeout")
             await asyncio.sleep(5)
-        async with client.get(origin + "/ui", auth=BasicAuth(
-                os.environ.get("WEB_USERNAME", "persona"), os.environ["WEB_PASSWORD"])) as response:
-            if response.status != 200 or "fish_session" not in response.cookies:
-                raise RuntimeError(f"browser_login_failed_http_{response.status}")
+        auth = BasicAuth(os.environ.get("WEB_USERNAME", "persona"), os.environ["WEB_PASSWORD"]) if auth_required else None
+        async with client.get(origin + "/ui", auth=auth) as response:
+            if response.status != 200 or (auth_required and "fish_session" not in response.cookies):
+                raise RuntimeError(f"browser_access_failed_http_{response.status}")
+            if not auth_required and ("WWW-Authenticate" in response.headers or "fish_session" in response.cookies):
+                raise RuntimeError("unexpected_login_in_public_mode")
             await response.read()
-        # Deliberately no Basic header: validate the same cookie used by the browser.
+        # No Basic header: use the login cookie, or anonymous access in public mode.
         async with client.get(origin + "/v1/tts/defaults") as response:
             defaults = await response.json()
             if defaults.get("model_family") != "drama3":
                 raise RuntimeError("wrong_model_family")
         started = time.monotonic()
         async with client.post(origin + "/v1/tts", headers={"Origin": origin}, json={
-                "text": "[excited] Hello! Fish Drama three is ready. Let's make something amazing!",
-                "format": "wav", "seed": 42, "references": []}) as response:
+                "text": "Hello world. My name is Alex. This is a voice test.",
+                "format": "wav", "seed": 1234, "references": []}) as response:
             if response.status != 200:
                 raise RuntimeError(f"tts_http_{response.status}")
             audio = await response.read()
@@ -47,7 +50,8 @@ async def run():
             raise RuntimeError("empty_silent_or_invalid_audio")
         output = Path("/workspace/fish-smoke.wav")
         output.write_bytes(audio)
-        result = {"model": "fishaudio/drama-3", "public_https": True, "cookie_auth": True,
+        result = {"model": "fishaudio/drama-3", "public_https": True, "cookie_auth": auth_required,
+                  "auth_required": auth_required,
                   "sample_rate": rate, "audio_seconds": round(len(samples) / rate, 2),
                   "bytes": len(audio), "peak": round(peak, 4),
                   "generation_seconds": round(time.monotonic() - started, 2),

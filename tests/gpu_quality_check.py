@@ -46,8 +46,9 @@ async def main():
         else:
             raise RuntimeError("readiness_timeout")
 
-        async with client.get(origin + "/ui", auth=BasicAuth(
-                os.environ.get("WEB_USERNAME", "persona"), os.environ["WEB_PASSWORD"])) as response:
+        auth_required = os.environ.get("WEB_AUTH_REQUIRED", "1") != "0"
+        auth = BasicAuth(os.environ.get("WEB_USERNAME", "persona"), os.environ["WEB_PASSWORD"]) if auth_required else None
+        async with client.get(origin + "/ui", auth=auth) as response:
             assert response.status == 200
             await response.read()
         async with client.get(origin + "/v1/tts/defaults") as response:

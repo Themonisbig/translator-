@@ -39,6 +39,12 @@ volume is created. Deleting its model cache means downloading the weights again.
 
 ## Secure configuration
 
+The current demo uses **`WEB_AUTH_REQUIRED=0`**, authorized by the user: it opens
+without credentials. Anyone with the URL can generate speech using this paid GPU.
+HTTPS, upload limits and origin checks remain enabled. For a fresh deployment add
+`--no-login` to the setup command below. Defaults retain password protection;
+set `WEB_AUTH_REQUIRED=1` and bind the existing web password to enable it again.
+
 Keep the existing RunPod secrets:
 
 - `personaplex_web`: existing private browser password, at least 16 characters.
@@ -91,9 +97,10 @@ reduce the available pool; a rejected allocation creates no usable deployment.
    The internal API on 8090 must stay private. No SSH port is requested.
 3. Before the download finishes, the proxy may return 502 because the gateway
    has not started yet. Once it starts, `/healthz` returns 503 while the model
-   warms up and 200 with `model: fishaudio/drama-3` when the official API is ready. Login is `persona` / your existing web password.
+   warms up and 200 with `model: fishaudio/drama-3` when the official API is ready.
+   With `WEB_AUTH_REQUIRED=0` no login is shown. Protected mode uses `persona` / your existing web password.
 4. `RUN_GPU_SMOKE=1` runs a real speech request through the public HTTPS URL using
-   the browser session cookie. Wait for **GPU_SMOKE_PASS** in logs before trying
+   anonymous access in public mode or the browser session cookie in protected mode. Wait for **GPU_SMOKE_PASS** in logs before trying
    your own generation. It writes `/workspace/fish-gpu-check.json` and a WAV result.
    This validates actual model output, not subjective voice quality or every device.
 5. In the official UI, enter a short sentence, optionally add voice references,

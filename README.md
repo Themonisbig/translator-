@@ -1,4 +1,4 @@
-# Fish Audio Drama 3 — private browser TTS on RunPod
+# Fish Audio Drama 3 — browser TTS on RunPod
 
 **Built with Fish Audio.**
 
@@ -21,8 +21,8 @@ listed separately from these real model tests.
 ## Try it after deployment
 
 1. Open your Pod's **8080 HTTP** link from RunPod Connect (managed HTTPS), ending in `/ui`.
-2. Sign in as **persona**, using the same web password stored in your existing
-   RunPod `personaplex_web` secret.
+2. The current demo opens **without a login**, as requested. Anyone with its URL
+   can use the paid GPU. Password protection remains available with `WEB_AUTH_REQUIRED=1`.
 3. Type a short sentence. For example: `[excited] Wow, this is amazing! I am so happy today!`
 4. Choose **wav** or **mp3**, then **Generate Audio**. Play or download the result.
 5. For a particular voice, upload a short clean reference recording and its exact

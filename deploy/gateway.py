@@ -1,4 +1,4 @@
-"""Authenticated, same-origin streaming HTTP gateway for the official Fish API."""
+"""Same-origin streaming Fish gateway with optional browser authentication."""
 import asyncio
 import hashlib
 import hmac
@@ -48,19 +48,20 @@ def origin_allowed(request):
 async def authenticate(request, handler):
     if request.path == "/healthz":
         return await handler(request)
-    try:
-        auth = BasicAuth.decode(request.headers.get("Authorization", ""))
-        valid = (hmac.compare_digest(auth.login.encode(), request.app["username"].encode())
-                 and hmac.compare_digest(auth.password.encode(), request.app["password"].encode()))
-    except (ValueError, UnicodeError):
-        valid = False
-    session = valid_session(request)
-    if not valid and not session:
-        return web.Response(status=401, text="Sign in using WEB_USERNAME and WEB_PASSWORD from RunPod secrets.",
-                            headers={"WWW-Authenticate": 'Basic realm="Fish Drama 3", charset="UTF-8"'})
+    if request.app["auth_required"]:
+        try:
+            auth = BasicAuth.decode(request.headers.get("Authorization", ""))
+            valid = (hmac.compare_digest(auth.login.encode(), request.app["username"].encode())
+                     and hmac.compare_digest(auth.password.encode(), request.app["password"].encode()))
+        except (ValueError, UnicodeError):
+            valid = False
+        session = valid_session(request)
+        if not valid and not session:
+            return web.Response(status=401, text="Sign in using WEB_USERNAME and WEB_PASSWORD from RunPod secrets.",
+                                headers={"WWW-Authenticate": 'Basic realm="Fish Drama 3", charset="UTF-8"'})
+        request["new_session"] = valid and not session
     if request.method not in ("GET", "HEAD", "OPTIONS") and not origin_allowed(request):
         raise web.HTTPForbidden(text="Generate speech from this site's own page.")
-    request["new_session"] = valid and not session
     return await handler(request)
 
 
@@ -120,10 +121,13 @@ async def client_context(app):
         yield
 
 
-def create_app(username=None, password=None, upstream="http://127.0.0.1:8090", public_origin=None):
+def create_app(username=None, password=None, upstream="http://127.0.0.1:8090", public_origin=None,
+               *, auth_required=None):
+    if auth_required is None:
+        auth_required = os.environ.get("WEB_AUTH_REQUIRED", "1") != "0"
     username = username or os.environ.get("WEB_USERNAME", "persona")  # Reuse the existing login.
     password = password or os.environ.get("WEB_PASSWORD", "")
-    if len(password) < 16 or password.startswith("{{"):
+    if auth_required and (len(password) < 16 or password.startswith("{{")):
         raise ValueError("Configure WEB_PASSWORD with at least 16 characters")
     if public_origin is None:
         public_origin = os.environ.get("PUBLIC_ORIGIN", "")
@@ -135,7 +139,7 @@ def create_app(username=None, password=None, upstream="http://127.0.0.1:8090", p
                 or parsed.password or parsed.path or parsed.query or parsed.fragment):
             raise ValueError("PUBLIC_ORIGIN must be an exact HTTP(S) origin without a path")
     app = web.Application(middlewares=[authenticate], client_max_size=MAX_BODY)
-    app.update(username=username, password=password, upstream=upstream,
+    app.update(username=username, password=password, auth_required=auth_required, upstream=upstream,
                public_origin=public_origin, session_key=secrets.token_bytes(32))
     app.cleanup_ctx.append(client_context)
     app.on_response_prepare.append(prepare_response)

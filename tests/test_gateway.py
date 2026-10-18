@@ -131,3 +131,19 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
         for origin in ("https://user:pass@voice.example", "https://voice.example/path", "file:///tmp"):
             with self.assertRaises(ValueError):
                 create_app(password=PASSWORD, public_origin=origin)
+
+    async def test_public_mode_works_without_credentials_and_keeps_origin_checks(self):
+        with patch.dict("os.environ", {"WEB_AUTH_REQUIRED": "0", "WEB_PASSWORD": ""}):
+            app = create_app(upstream=str(self.upstream.make_url("/")).rstrip("/"),
+                             public_origin="https://voice.example")
+        async with TestClient(TestServer(app)) as client:
+            response = await client.get("/ui")
+            self.assertEqual(response.status, 200)
+            self.assertNotIn("WWW-Authenticate", response.headers)
+            self.assertNotIn(SESSION_COOKIE, response.cookies)
+            response = await client.post("/echo", json={"text": "hello"},
+                                         headers={"Origin": "https://voice.example"})
+            self.assertEqual(await response.json(), {"text": "hello"})
+            self.assertNotIn("Cookie", self.received[1])
+            response = await client.post("/echo", json={}, headers={"Origin": "https://attacker.example"})
+            self.assertEqual(response.status, 403)
