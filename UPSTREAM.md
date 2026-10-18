@@ -1,33 +1,31 @@
-# Official implementation provenance
+# Official Fish Audio Drama 3
 
-Vendored from https://github.com/NVIDIA/personaplex at commit
-`3428dfd95309a7f3c84fd93259ded0f810d1ff91` (inspected 2026-10-15).
-Upstream MIT license is retained at vendor/personaplex/LICENSE-MIT.
-Model weights are not included; accept the NVIDIA Open Model license on
-https://huggingface.co/nvidia/personaplex-7b-v1 before using them.
+The `vendor/fish-speech` snapshot is the unmodified official source:
+https://github.com/fishaudio/fish-speech
 
-The model, inference server, Opus protocol, audio encoder/decoder, and streaming
-architecture are unchanged. Browser-only changes: energetic prompt preset,
-mobile layout, microphone/audio startup error, microphone track cleanup,
-same-origin WebSocket address and /api configuration default, connection timeout/status and stop controls.
-The original unmodified browser client was built successfully before modifications.
+- Source commit: `541566932abbaebcb0a40e562a1f846738383f38`.
+- Model: https://huggingface.co/fishaudio/drama-3
+- Model revision: `b2b5ee998034b2975720906c815e7fb0e9f007bd`.
+- Official browser UI: `awesome_webui`, served by `tools/api_server.py` at `/ui`.
+- Runtime: Python 3.12, Torch 2.8.0, CUDA 12.8, the official frozen `uv.lock`.
+- Single GPU: NVIDIA SM89+ with 48GB-class VRAM. RTX 6000 Ada, L40 or L40S.
+  The earlier A40 (SM86) would expand FP8 weights into BF16 and will not fit this
+  single-GPU setup. Compilation stays disabled, as required by Drama 3.
+- This is the 35B-A3B Drama 3 model, not S2-Pro and not the hosted Fish API.
+- Checkpoints are downloaded at runtime to the persistent volume, never Git or images.
 
-RunPod provisioning payload follows official runpod/runpod-python SDK source,
-commit `1d7ae99f4e478fa932ec616b0ac7fe18998a78c6`, specifically
-runpod/api/ctl_commands.py:create_pod and runpod/api/rest.py.
-It uses the current `/v2/pods` API at api.runpod.io, not older REST v1 examples.
-Secret-reference syntax was also verified against
-https://docs.runpod.io/pods/templates/secrets. Actual provisioning and secret
-resolution remain unvalidated without credentials.
+The code and Drama 3 model use the Fish Audio Community License v1.0, included in
+[vendor/fish-speech/LICENSE](vendor/fish-speech/LICENSE). Personal non-commercial
+experimentation is covered by that license; public hosted services and other
+commercial uses can require a separate Fish Audio license. Read its terms before
+expanding beyond this private demo. “Open weights” does not mean unrestricted use.
 
-Container compatibility correction: PyTorch's 2.4.1 CUDA base image contains
-`ninja 1.11.1.1` wheel metadata that fails `pip check` on the Linux build runner.
-The Dockerfile reinstalls the supported PyPI `ninja==1.11.1.3` wheel, retaining
-dependency checks and all signature/TLS verification. No model dependency
-constraints were changed.
+Our changes are only the Docker wrapper, authenticated HTTP gateway, lifecycle,
+RunPod setup, documentation and tests. Upstream speech inference and browser UI
+are unchanged. `deploy/check_runtime.py` honors the one protobuf constraint override
+explicitly present in the official project, and rejects other missing/conflicting
+runtime dependencies.
 
-Gateway fixes after the first browser attempt: use the configured public origin
-across proxy Host rewriting and authenticate browser WebSockets with a signed
-HttpOnly session cookie. Added a real-browser reverse-proxy regression test.
-`deploy/gpu_smoke.py` optionally streams NVIDIA's official input WAV through the
-actual deployed HTTPS/WSS GPU service; it is a client test, not a model substitute.
+The previous PersonaPlex source and runtime have been removed. The existing public
+GHCR package name `personaplex-voice` and RunPod secret names are retained as reusable
+infrastructure; new image versions contain Fish Drama 3 only.

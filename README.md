@@ -1,94 +1,63 @@
-# PersonaPlex browser voice chatbot on RunPod
+# Fish Audio Drama 3 — private browser TTS on RunPod
 
-An authenticated cloud deployment of **NVIDIA's official PersonaPlex 7B v1**
-full-duplex speech-to-speech model. Inference runs on a RunPod GPU; your desktop
-or phone handles only microphone capture and playback. No STT/LLM/TTS replacement,
-mock voice backend, or client-side model is used.
+Run the official **Fish Audio Drama 3 (35B-A3B)** model on a cloud NVIDIA GPU.
+The official Fish browser demo lets you type expressive text, optionally upload
+voice references with transcripts, then play or download generated speech.
 
-## Current status
+This project now provides text-to-speech. The previous PersonaPlex conversation
+app has been removed. A microphone conversation or automatic chatbot replies
+would need additional speech-recognition and language-model components.
 
-- **Deployed:** https://0gsotvofrwom53-8080.proxy.runpod.net — sign in as `persona`
-  with your existing RunPod `personaplex_web` password. Refresh after updates.
-- **Real GPU streaming passed:** public HTTPS login, session-cookie WSS, and the
-  official audio fixture produced 47.76 seconds of decoded, non-silent audio and
-  466 text characters. Output arrived while input was streaming. See
-  [deployment status](deploy/STATUS.md) and [test results](deploy/last-gpu-check.json).
-- Original official browser demo: production build passed.
-- Adapted browser: TypeScript/production build passed; desktop and mobile-width
-  browser checks cover all 18 voices, energetic personality selection, layout,
-  and microphone-denied errors.
-- Sixteen CPU integration checks cover authentication, readiness, binary WebSocket
-  forwarding, proxy Host rewriting, session cookies, input validation and deployment
-  planning. A real-browser proxy test covers microphone packets and stop controls.
-- Physical-device microphone conversations, subjective voice quality, natural
-  interruption handling and physical-mobile playback still need user testing.
-  CPU transport fixtures and prerecorded GPU tests do not establish those behaviors.
-- See [deployment instructions](deploy/RUNPOD.md) and [provenance](UPSTREAM.md).
+## Current readiness
+
+See [deployment status](deploy/STATUS.md). CPU and browser fixture tests do not
+prove GPU synthesis works. No live browser URL is claimed until the actual Drama 3
+model has passed a GPU speech request.
+
+## Try it after deployment
+
+1. Open your Pod's **8080 HTTP** link from RunPod Connect (managed HTTPS), ending in `/ui`.
+2. Sign in as **persona**, using the same web password stored in your existing
+   RunPod `personaplex_web` secret.
+3. Type a short sentence. For example: `[excited] Wow! This is absolutely amazing! [laughing] Let's go!`
+4. Choose **wav** or **mp3**, then **Generate Audio**. Play or download the result.
+5. For a particular voice, upload a short clean reference recording and its exact
+   transcript. Use recordings you have permission to use. Speaker groups support
+   multi-character scripts with `<|speaker:0|>` through `<|speaker:15|>`.
 
 ## Deploy
 
-1. Accept the [model license](https://huggingface.co/nvidia/personaplex-7b-v1).
-2. Follow [RunPod setup](deploy/RUNPOD.md) to build/publish the image, configure
-   Hugging Face and browser-password secrets, and create one GPU Pod.
-3. Open the **actual HTTPS proxy URL shown in RunPod Connect**, authenticate,
-   select a voice/personality, and click **Start conversation**. Stop the
-   conversation to change settings. Stop the GPU Pod when finished to stop GPU
-   billing; persistent storage may continue to be billed.
+Follow [the RunPod guide](deploy/RUNPOD.md). A single 48GB **RTX 6000 Ada, L40 or L40S**
+GPU is required. **A40 and RTX A6000 are unsuitable for this FP8 configuration.**
+The setup script is dry-run by default, reuses existing secure bindings, and
+checks stock and the current GPU quote against an explicit spending ceiling.
+The previous $0.50/hour ceiling will reject current $0.74/hour compatible stock.
 
-The energetic preset is deliberately playful, funny and hyperactive. Voice and
-style are conditioning instructions; model adherence is not guaranteed. Headphones
-are recommended when testing simultaneous listening/speaking and interruptions.
+Public weights need no new Fish API key. An existing Hugging Face token is optional
+for download rate limits. Never commit credentials. Only the authenticated gateway
+on port 8080 is public; the model server listens on loopback port 8090.
 
-## Architecture
+## Local development and CPU checks
 
-Browser (official React/Opus/AudioWorklet client) → RunPod managed HTTPS/WSS proxy
-→ authenticated Python gateway on 8080 → official `moshi.server` on 8998
-→ official `nvidia/personaplex-7b-v1` model on NVIDIA CUDA GPU.
-
-Both audio directions remain streaming. The gateway forwards the official binary
-protocol, with no turn-based recording or silence gating. The upstream server
-serializes conversations; this deployment is intended for **one active user**.
-Only gateway port 8080 is exposed. RunPod terminates trusted TLS, so self-signed
-certificates and personal-computer tunnels are unnecessary.
-
-## Local development and checks (no GPU required)
-
-Python 3.10+ (tested 3.12), Node 20.19+ and npm are sufficient for CPU checks.
-Inference image uses PyTorch 2.4.1/CUDA 12.4 and upstream's Python dependencies.
+Requirements: Python 3.12 and Node 22+. This development machine needs no GPU for
+these checks and does not download the model.
 
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements-dev.txt
 bash scripts/check.sh
-python -m playwright install chromium
-python tests/browser_check.py
+python -m playwright install --with-deps chromium
 python tests/browser_gateway_check.py
-python scripts/runpod_setup.py  # offline dry run; no charges
 ```
 
-For restricted machines choose writable npm/pip cache directories. No secret is
-needed for CPU checks. CI also builds the Docker image; successful image builds
-are distinct from GPU readiness. Do not use Vite's development server as the
-public endpoint.
+In this managed cloud workspace, set `UV_CACHE_DIR=/workspace/.cache/uv` and
+`NPM_CONFIG_CACHE=/workspace/.cache/npm` when using uv/npm because the home directory
+is read-only. The browser check can use preinstalled system Chromium.
 
-## Files and licensing
+GitHub Actions runs the tests, builds the unmodified official browser UI and the
+CUDA container, validates imports/CLI/runtime requirements, then publishes versioned
+images to the existing public GHCR package. Model weights and API keys never enter CI.
 
-- `vendor/personaplex`: pinned official implementation and MIT license.
-- `Dockerfile`: builds the official client and CUDA inference runtime.
-- `deploy/launch.py`: validates runtime requirements and supervises both services.
-- `deploy/gateway.py`: password authentication, health and WebSocket bridge.
-- `scripts/runpod_setup.py`: offline deployment plan or explicit billable creation.
-- `.github/workflows/checks.yml`: CPU/browser checks and GHCR image publishing.
-
-Model weights are downloaded at runtime into `/workspace/huggingface`, never
-committed or embedded in the image. Use RunPod's secret manager for `HF_TOKEN`
-and `WEB_PASSWORD`. Keep `RUNPOD_API_KEY` in your secure execution environment.
-Never paste secrets into chat, commit `.env`, or use Docker build arguments for
-credentials. HTTPS protects authentication in transit; this is a single-user
-password gate, not a multi-user account system. Downloadable conversation recordings
-are generated by the official browser client and may remain in browser memory.
-
-The previous phrasebook was removed. Its committed history contained a credential;
-revoke that old credential with its provider because deleting a file does not
-remove Git history. No old credential is used by this project.
+See [upstream versions and license](UPSTREAM.md). Drama 3 is available under the
+Fish Audio Community License, which has hosted-service and commercial restrictions.

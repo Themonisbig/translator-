@@ -9,3 +9,8 @@ __pycache__/
 *.pt
 *.safetensors
 .cache/
+.venv/
+checkpoints/
+*.pth
+*.wav
+fish-gpu-check.json

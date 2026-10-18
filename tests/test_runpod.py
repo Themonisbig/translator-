@@ -1,41 +1,42 @@
-import contextlib
-import io
 import unittest
 from unittest.mock import patch
-from scripts.runpod_setup import build_payload, main, secret_ref
+from scripts.runpod_setup import build_payload, provision, hourly_quote, secret_ref
+
+IMAGE = "ghcr.io/themonisbig/personaplex-voice:" + "a" * 40
+
 
 class RunPodTests(unittest.TestCase):
-    def test_only_gateway_exposed_and_secrets_are_references(self):
-        payload = build_payload("ghcr.io/themonisbig/personaplex-voice:main")
+    def test_reuses_only_secret_references_and_private_model_server(self):
+        payload = build_payload(IMAGE)
+        self.assertEqual(payload["env"]["WEB_PASSWORD"], "{{ RUNPOD_SECRET_personaplex_web }}")
         self.assertEqual(payload["ports"], ["8080/http"])
-        self.assertEqual(payload["gpu"]["count"], 1)
-        self.assertEqual(payload["mounts"]["persistent"]["path"], "/workspace")
-        self.assertEqual(payload["env"]["HF_TOKEN"], "{{ RUNPOD_SECRET_personaplex_hf }}")
         self.assertFalse(payload["startSsh"])
+        self.assertEqual(payload["gpu"]["count"], 1)
+        self.assertEqual(payload["env"]["FISH_DRAMA3_FP8_EXPERTS"], "1")
 
-    def test_rejects_unpinned_images_bad_names_and_blackwell(self):
+    def test_old_gpu_and_unsafe_registry_rejected(self):
+        for gpu in ("NVIDIA A40", "NVIDIA RTX A6000", "NVIDIA GeForce RTX 4090"):
+            with self.assertRaises(ValueError):
+                build_payload(IMAGE, gpu=gpu)
         with self.assertRaises(ValueError):
-            build_payload("image-without-tag")
+            build_payload("https://user:secret@registry/image")
         with self.assertRaises(ValueError):
             secret_ref("bad name")
-        with self.assertRaises(ValueError):
-            build_payload("test/image:main", gpu="NVIDIA RTX 5090")
 
-    def test_default_is_offline_dry_run(self):
-        with patch("scripts.runpod_setup.request") as request, contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(main([]), 0)
-            request.assert_not_called()
+    @patch("scripts.runpod_setup.request")
+    @patch("scripts.runpod_setup.hourly_quote", return_value=0.74)
+    def test_budget_limit_prevents_creation(self, quote, request):
+        with self.assertRaisesRegex(RuntimeError, "exceeds"):
+            provision("test-placeholder", build_payload(IMAGE), 0.50)
+        request.assert_not_called()
 
-    def test_creation_requires_billing_acknowledgement(self):
-        with patch("scripts.runpod_setup.request") as request, contextlib.redirect_stderr(io.StringIO()):
-            with self.assertRaises(SystemExit):
-                main(["--create"])
-            request.assert_not_called()
+    @patch("scripts.runpod_setup.request", return_value={"id": "test-pod"})
+    @patch("scripts.runpod_setup.hourly_quote", return_value=0.74)
+    def test_authorized_rate_creates_exactly_one_pod(self, quote, request):
+        self.assertEqual(provision("test-placeholder", build_payload(IMAGE), 0.74)["id"], "test-pod")
+        request.assert_called_once_with("POST", "/pods", "test-placeholder", build_payload(IMAGE))
 
-    def test_creation_uses_v2_shape_and_does_not_log_credentials(self):
-        with patch.dict("os.environ", {"RUNPOD_API_KEY": "fake-test-only"}), \
-             patch("scripts.runpod_setup.request", return_value={"id": "testpod"}) as request, \
-             contextlib.redirect_stdout(io.StringIO()) as output:
-            self.assertEqual(main(["--create", "--accept-billing"]), 0)
-            self.assertEqual(request.call_args.args[:2], ("POST", "/pods"))
-            self.assertNotIn("fake-test-only", output.getvalue())
+    @patch("scripts.runpod_setup.request", return_value={"data": {"gpuTypes": [{"lowestPrice": None}]}})
+    def test_no_stock_stops_deployment(self, request):
+        with self.assertRaisesRegex(RuntimeError, "stock"):
+            hourly_quote("test-placeholder", "NVIDIA L40", "COMMUNITY")

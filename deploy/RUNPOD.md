@@ -1,181 +1,106 @@
 # RunPod deployment
 
-## 1. Personal authorization and secrets
+## Hardware and costs
 
-These steps require your accounts and cannot be completed by code alone:
+Use one **NVIDIA RTX 6000 Ada Generation**, **L40**, or **L40S**, with 48GB VRAM,
+at least 64GB host RAM and 8 vCPUs. Drama 3's official FP8 kernels require SM89+.
+A40 and RTX A6000 are SM86 and cannot run this single-GPU configuration.
+Python 3.12 / Torch 2.8 / CUDA 12.8 follow the official dependency lockfile.
+Do not enable `--compile` for Drama 3.
 
-- Sign in to Hugging Face and accept the NVIDIA license for
-  https://huggingface.co/nvidia/personaplex-7b-v1. Create a read token authorized
-  for that gated model.
-- Enable RunPod billing and review the current hourly GPU and storage rates.
-- In RunPod's secret manager, create `personaplex_hf` with the Hugging Face token,
-  and `personaplex_web` with a randomly generated password of at least 16 characters.
-  The Pod environment references these as `{{ RUNPOD_SECRET_personaplex_hf }}`
-  and `{{ RUNPOD_SECRET_personaplex_web }}`. Verify that your RunPod template/API
-  resolves those references. If your RunPod interface uses a secret picker, bind
-  the secrets using that picker rather than putting literal values into scripts.
-- If using automated creation, make a RunPod API key and inject it securely as
-  `RUNPOD_API_KEY` in the machine running the setup script. It is **not** needed
-  inside the inference Pod. Do not send tokens or passwords in chat.
+On 2026-10-18, the lowest available compatible Community GPU quote was
+**$0.74/hour** for RTX 6000 Ada, above the previous $0.50/hour limit. Prices and
+stock change. Check before creating; no higher rate is implicitly approved.
 
-The script does not upload or invent secret values. Unresolved secret placeholders
-cause startup to fail with a useful message instead of treating them as credentials.
+The script requests 80GB persistent `/workspace` (roughly 40GB model weights) and
+40GB container disk. **Storage is billed separately.** RunPod's live creation quote
+is authoritative. Stopping ends GPU charges but leaves paid persistent storage.
+Terminate/delete the Pod to delete its attached volume when finished. No network
+volume is created. Deleting its model cache means downloading the weights again.
 
-## 2. Build and publish the container
+## Secure configuration
 
-The repository's GitHub Actions workflow runs CPU/browser checks, then builds and
-pushes `ghcr.io/themonisbig/personaplex-voice:main` and a commit-SHA tag on main.
-Check the Actions run actually succeeds before attempting deployment. GitHub
-Packages may initially be private: make this package public in its settings, or
-configure a RunPod registry credential for private image pulls. Registry credentials
-must not be inserted into the image name or repository files.
+Keep the existing RunPod secrets:
 
-Alternatively, build on any cloud Docker builder (no GPU or model token required):
+- `personaplex_web`: existing private browser password, at least 16 characters.
+- `personaplex_hf`: optional existing Hugging Face read token (public model).
+
+Names are kept for reuse; the application now runs Fish. The script uses
+`{{ RUNPOD_SECRET_name }}` references only. Do not paste secret values into code,
+Docker build arguments, commands, logs or chat. Set `RUNPOD_API_KEY` securely in the
+cloud environment if provisioning from there. No Fish hosted API credential is needed.
+
+## Automated setup
+
+First wait for a passing **CPU checks and container** run:
+https://github.com/Themonisbig/translator-/actions
+
+Use the immutable full commit tag from the successful container build:
 
 ```bash
-docker build -t ghcr.io/themonisbig/personaplex-voice:main .
-# Authenticate to GHCR securely using your platform's secret storage, then:
-docker push ghcr.io/themonisbig/personaplex-voice:main
+python scripts/runpod_setup.py --quote
+python scripts/runpod_setup.py --image ghcr.io/themonisbig/personaplex-voice:COMMIT_SHA
 ```
 
-Prefer the immutable commit tag or digest for actual deployment. The CUDA image
-is large; allow sufficient image build/pull time and 30+ GB container storage.
-
-## 3. Provision
-
-Default: one **NVIDIA A40 48GB**, Secure Cloud, at least 8 vCPUs/48GB host RAM,
-30GB container disk and 80GB persistent volume mounted at `/workspace`.
-48GB is a conservative deployment choice, not a claimed official minimum.
-A6000, L40S, A100 80GB and H100 80GB are alternatives; availability and pricing vary.
-Do not select Blackwell/RTX 5090 for this image: NVIDIA's README documents a separate
-CUDA 13/PyTorch install path that conflicts with the pinned PyTorch <2.5 dependency.
-No CPU offload is enabled by default to preserve the intended real-time workflow.
-
-Inspect the safe offline plan:
+Both commands are read-only or dry-run. After explicitly approving a current GPU
+rate, create exactly one Pod (example ceiling, not an authorization):
 
 ```bash
-python3 scripts/runpod_setup.py --image ghcr.io/themonisbig/personaplex-voice:COMMIT_SHA
-```
-
-After confirming image visibility, secret bindings, available GPU and current rates:
-
-```bash
-python3 scripts/runpod_setup.py \
+python scripts/runpod_setup.py \
   --image ghcr.io/themonisbig/personaplex-voice:COMMIT_SHA \
-  --create --accept-billing
+  --gpu 'NVIDIA RTX 6000 Ada Generation' \
+  --max-hourly 0.74 --create --accept-billing
 ```
 
-This creates a **billable** GPU Pod. It does not enforce a monetary budget or
-retry a failed creation request. If the request times out, inspect your RunPod Pods
-before retrying: creation may already have succeeded. It does not auto-delete your
-Pod or storage. The API request shape was checked against current official SDK
-source, but live provisioning and secret resolution require validation on your account.
+The legacy public image package is reused to avoid needing a new registry login.
+New commit tags contain only Fish Drama 3, not PersonaPlex. Prefer immutable tags.
+There are no automatic POST retries: if creation times out, inspect Pods before
+retrying so you do not accidentally pay for duplicates.
 
-If API access is unavailable, create a Pod in RunPod's dashboard with the same image,
-GPU/storage settings and environment bindings:
+The automatic stock/price check precedes creation but is not a contractual rate
+reservation. Verify the resulting Pod quote in RunPod. Host RAM/CPU constraints can
+reduce the available pool; a rejected allocation creates no usable deployment.
 
-| Variable | Value/source |
-| --- | --- |
-| `HF_TOKEN` | Hugging Face secret binding |
-| `WEB_PASSWORD` | Browser-password secret binding |
-| `WEB_USERNAME` | `persona` |
-| `HF_HOME` | `/workspace/huggingface` |
+## Startup and browser
 
-Expose **8080 HTTP only**, not raw inference port 8998 or a public TCP port.
-Keep the image's default command. No SSH or nested Docker daemon is needed in the Pod.
-A Pod volume survives stop/start but is normally lost on termination; use a network
-volume if you need cache persistence across replacing Pods. Cached gated model files
-remain sensitive to the model license and should not be made public.
+1. The image validates CUDA hardware, downloads the pinned public
+   `fishaudio/drama-3` revision to `/workspace/checkpoints/drama-3`, then starts the
+   official model server and authenticated gateway. First boot can take 10–30+
+   minutes depending on image pull, download speed and model warmup.
+2. Expose **8080 HTTP** only. RunPod Connect supplies
+   `https://POD_ID-8080.proxy.runpod.net/ui` with managed TLS for desktop/mobile.
+   The internal API on 8090 must stay private. No SSH port is requested.
+3. `/healthz` returns 503 while loading and 200 with `model: fishaudio/drama-3`
+   when the official API is ready. Login is `persona` / your existing web password.
+4. `RUN_GPU_SMOKE=1` runs a real speech request through the public HTTPS URL using
+   the browser session cookie. Wait for **GPU_SMOKE_PASS** in logs before trying
+   your own generation. It writes `/workspace/fish-gpu-check.json` and a WAV result.
+   This validates actual model output, not subjective voice quality or every device.
+5. In the official UI, enter a short sentence, optionally add voice references,
+   choose wav/mp3, and generate. A new random voice may be chosen without a reference.
+   Emotion tags include `[excited]`, `[whisper]`, `[angry]`, and `[laughing]`.
 
-## 4. Readiness and HTTPS
+The gateway derives its exact public origin from `RUNPOD_POD_ID`. For a custom
+HTTPS domain set `PUBLIC_ORIGIN=https://your-host` (no trailing slash). Login cookies
+are HttpOnly, signed, Secure on HTTPS and SameSite Strict; mutating cross-origin
+requests are blocked even when the hosting proxy rewrites Host.
 
-Watch Pod logs for successful downloads, CUDA model loading/warmup and server startup.
-The first start downloads gated model and voice assets; it can take many minutes.
-`HF_TOKEN` must be authorized for the accepted model license. Model errors stop the
-supervisor so the service does not remain falsely healthy.
+## Troubleshooting and cleanup
 
-In RunPod **Connect**, select HTTP service port 8080. Its managed proxy supplies a
-trusted HTTPS URL, usually `https://POD_ID-8080.proxy.runpod.net`. A printed pattern
-is not proof of deployment; use the URL RunPod actually provides.
+- **503/loading:** check Pod logs for model download progress, disk space, CUDA
+  errors or a failed secret binding. Do not create another Pod to retry.
+- **401:** use the existing web password; refresh/re-login after a container restart.
+- **403:** open the actual public `/ui` URL; ensure PUBLIC_ORIGIN matches its origin.
+- **Generation fails:** inspect model logs, start with one short sentence and no
+  reference, then try a clean reference with an exact transcript. Limit is 5,000
+  text characters and 50MB per HTTP upload; model context limits also apply.
+- **GPU_SMOKE_FAIL:** real inference has not passed. Inspect logs; do not treat a
+  visible web page or successful container build as proof the model works.
+- **Wrong GPU/VRAM:** use one of the supported cards; the launcher exits before a
+  large download if hardware is unsuitable.
+- **No further costs wanted:** terminate/delete the Pod, then inspect Pods and
+  Storage for leftovers. Stopping alone keeps persistent-volume charges.
 
-```bash
-curl --fail https://YOUR_ACTUAL_RUNPOD_HOST/healthz
-# Expected once model warmup is complete: {"status": "ready"}
-python3 scripts/runpod_setup.py --status YOUR_POD_ID
-```
-
-Health is intentionally unauthenticated and contains no prompts/credentials. It
-verifies upstream HTTP availability after official model warmup; **it does not
-verify generated audio**. All browser assets and the chat WebSocket require browser
-Basic authentication. Username is `persona`; password comes from `personaplex_web`.
-The browser caches Basic credentials; close the browser session or rotate the secret
-to revoke access. Use only the HTTPS URL for remote access.
-
-## 5. Required GPU/browser acceptance test (not yet executed)
-
-1. Confirm GPU allocation and CUDA startup in logs, then `/healthz` returns ready.
-2. Open HTTPS on desktop, authenticate, choose NATF0 and the default assistant prompt.
-3. Click Start conversation, grant microphone permission, confirm status reaches
-   connected and the AI produces intelligible spoken responses to your live speech.
-4. Speak while the AI is speaking; verify it listens and handles interruptions
-   without waiting for a manual recording turn. Test pauses and backchannels.
-5. Stop; confirm microphone use ends. Start again with NATM1 and the energetic,
-   funny, hyperactive preset; confirm voice/style changes.
-6. Repeat from real mobile Safari/Chrome over HTTPS. Confirm playback unlocks
-   after the user gesture, microphone permission works and no horizontal overflow
-   prevents controls. CPU tests use mobile viewport sizes, not physical devices.
-7. Disconnect/reconnect the network; verify visible status/error and successful retry.
-
-Record GPU type, image SHA, readiness, each result and any latency/voice issues.
-Do not label full-duplex audio working until these tests pass on a GPU.
-
-## Troubleshooting and costs
-
-- **401 login:** use the browser password, not your Hugging Face token.
-- **503/loading:** inspect logs; downloads/warmup may still be running.
-- **HF 401/403/gated model:** accept the license and check token access/secret binding.
-- **CUDA unavailable:** use a GPU Pod with NVIDIA runtime, not a CPU instance.
-- **OOM:** switch to a supported higher-memory GPU. CPU offload is an official
-  option but is not configured or tested here and may affect real-time speed.
-- **WebSocket fails:** only expose 8080 through the HTTPS proxy; check auth and model
-  logs. One concurrent conversation is supported; other sessions may wait/time out.
-- **No microphone:** use HTTPS, permit microphone access, and test a current browser.
-- **Echo/feedback:** wear headphones; keep browser audio processing enabled.
-- Stop the Pod in RunPod after testing to stop GPU charges. Storage may still incur
-  charges while stopped. Terminate/delete only after preserving any wanted cache or
-  recordings and reviewing what storage will be destroyed.
-
-## Builds behind an enterprise TLS proxy
-
-Normal cloud builders need no special flags. In a restricted environment, pass the
-platform's trusted public CA certificate through the optional BuildKit `build_ca`
-secret and forward the supported proxy variables. This preserves certificate
-verification and does not embed proxy credentials or the extra CA in the image:
-
-```bash
-docker build --build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY \
-  --secret id=build_ca,src=/path/to/trusted-proxy-ca.crt -t personaplex-voice .
-```
-
-If the build daemon cannot resolve the proxy hostname, configure the builder's
-network/DNS using the platform-provided proxy address. Never disable TLS, npm
-integrity checks or package signature verification.
-
-## Gateway origin and browser session
-
-Set `PUBLIC_ORIGIN` to the exact public HTTPS origin when using a reverse proxy.
-On RunPod the gateway also derives the default from `RUNPOD_POD_ID` and HTTP port
-8080. Origin checking uses that public address rather than an internal rewritten
-Host header. HTTP Basic login establishes a signed, HttpOnly, SameSite=Strict
-session cookie (Secure over HTTPS), allowing the WebSocket to authenticate even
-when the browser or proxy omits its Basic header. Sessions expire after one hour
-and are invalidated when the gateway restarts. Reload the page to log in again.
-
-For an opt-in deployment test, set `RUN_GPU_SMOKE=1` in the Pod environment. After
-readiness, this checks the public HTTPS login/session and streams the checked-in
-NVIDIA input WAV through WSS at real-time cadence. It verifies generated Opus
-audio decodes to non-silent PCM, text is returned, and output arrives while input
-is streaming. It logs `GPU_SMOKE_RESULT` without credentials or conversation
-contents. Allow about a minute after model warmup before starting your own
-conversation. A passing fixture test does not establish physical microphone
-compatibility or the quality of interruption handling.
+To build the image yourself: `bash scripts/build_image.sh` (Docker Buildx, about
+15–25GB free disk). It needs no model token at build time. Inside the container,
+`python /app/deploy/gpu_smoke.py` reruns the real public HTTPS synthesis check.

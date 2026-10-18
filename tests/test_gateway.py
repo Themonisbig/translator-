@@ -2,121 +2,132 @@ import asyncio
 import time
 import unittest
 from unittest.mock import patch
-from aiohttp import BasicAuth, web
+
+from aiohttp import BasicAuth, FormData, web
 from aiohttp.test_utils import TestClient, TestServer
 from deploy.gateway import create_app, SESSION_COOKIE
 
 PASSWORD = "test-password-not-a-real-secret"
 AUTH = BasicAuth("persona", PASSWORD)
 
+
 class GatewayTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        async def home(request):
-            return web.Response(text="official demo", content_type="text/html")
-        async def chat(request):
-            ws = web.WebSocketResponse()
-            await ws.prepare(request)
-            # Protocol fixture only: this is not model inference or an audio test.
-            await ws.send_bytes(b"\x00")
-            async for msg in ws:
-                if msg.type == web.WSMsgType.BINARY:
-                    await ws.send_bytes(msg.data)
-            return ws
+        self.received = None
+        self.release_audio = asyncio.Event()
+        async def ui(request):
+            return web.Response(text="official Fish demo", content_type="text/html")
+        async def health(request):
+            return web.json_response({"status": "ok"})
+        async def echo(request):
+            self.received = (request.method, dict(request.headers), await request.read())
+            return web.Response(body=self.received[2], content_type=request.content_type)
+        async def streaming(request):
+            response = web.StreamResponse(headers={"Content-Type": "audio/wav"})
+            await response.prepare(request)
+            await response.write(b"first audio chunk")
+            await self.release_audio.wait()
+            await response.write(b"last audio chunk")
+            return response
+        async def error(request):
+            return web.json_response({"detail": "Text is too long"}, status=400)
         app = web.Application()
-        app.router.add_get("/", home)
-        app.router.add_get("/api/chat", chat)
+        app.router.add_get("/ui", ui)
+        app.router.add_get("/v1/health", health)
+        app.router.add_post("/stream", streaming)
+        app.router.add_post("/bad", error)
+        app.router.add_route("*", "/echo", echo)
         self.upstream = TestServer(app)
         await self.upstream.start_server()
-        gateway = create_app("persona", PASSWORD, str(self.upstream.make_url("/")).rstrip("/"))
-        self.client = TestClient(TestServer(gateway))
+        self.client = TestClient(TestServer(create_app("persona", PASSWORD,
+                     str(self.upstream.make_url("/")).rstrip("/"))))
         await self.client.start_server()
 
     async def asyncTearDown(self):
+        self.release_audio.set()
         await self.client.close()
         await self.upstream.close()
 
-    async def test_requires_authentication_and_rejects_bad_password(self):
-        for auth in (None, BasicAuth("persona", "incorrect")):
-            response = await self.client.get("/", auth=auth)
+    async def test_login_cookie_and_ui_redirect(self):
+        for auth in (None, BasicAuth("persona", "wrong")):
+            response = await self.client.get("/ui", auth=auth)
             self.assertEqual(response.status, 401)
-            self.assertIn("Basic", response.headers["WWW-Authenticate"])
-
-    async def test_serves_authenticated_browser_and_readiness(self):
-        response = await self.client.get("/", auth=AUTH)
-        self.assertEqual(response.status, 200)
-        self.assertEqual(await response.text(), "official demo")
+        response = await self.client.get("/", auth=AUTH, allow_redirects=False)
+        self.assertEqual(response.headers["Location"], "/ui")
+        cookie = response.cookies[SESSION_COOKIE]
+        self.assertTrue(cookie["httponly"])
+        self.assertEqual(cookie["samesite"], "Strict")
+        response = await self.client.get("/ui")
+        self.assertEqual(await response.text(), "official Fish demo")
         self.assertEqual(response.headers["Cache-Control"], "no-store")
-        health = await self.client.get("/healthz")
-        self.assertEqual(await health.json(), {"status": "ready"})
+        self.assertNotIn("Authorization", response.request_info.headers)
 
-    async def test_reports_loading_when_upstream_is_down(self):
+    async def test_readiness_and_downstream_errors(self):
+        response = await self.client.get("/healthz")
+        self.assertEqual((await response.json())["model"], "fishaudio/drama-3")
         await self.upstream.close()
         response = await self.client.get("/healthz")
         self.assertEqual(response.status, 503)
-        response = await self.client.get("/", auth=AUTH)
+        response = await self.client.get("/ui", auth=AUTH)
         self.assertEqual(response.status, 503)
+        self.assertIn("loading", await response.text())
 
-    async def test_rejects_invalid_voice_and_oversize_prompt(self):
-        for query in ({"voice_prompt": "../../outside.pt"},
-                      {"voice_prompt": "NATF0.pt", "text_prompt": "x" * 1001}):
-            response = await self.client.get("/api/chat", params=query, auth=AUTH)
-            self.assertEqual(response.status, 400)
+    async def test_post_json_and_delete_and_credentials_not_forwarded(self):
+        response = await self.client.post("/echo", auth=AUTH, json={"text": "[excited] hello"})
+        self.assertEqual(await response.json(), {"text": "[excited] hello"})
+        self.assertNotIn("Authorization", self.received[1])
+        self.assertNotIn("Cookie", self.received[1])
+        response = await self.client.delete("/echo")
+        self.assertEqual(response.status, 200)
+        self.assertEqual(self.received[0], "DELETE")
 
-    async def test_rejects_cross_origin_websocket(self):
-        response = await self.client.get("/api/chat?voice_prompt=NATF0.pt", auth=AUTH,
-                                         headers={"Origin": "https://other.example"})
+    async def test_reference_multipart_bytes_preserved(self):
+        form = FormData()
+        form.add_field("text", "Reference transcript")
+        form.add_field("audio", b"RIFF-reference-bytes", filename="voice.wav", content_type="audio/wav")
+        response = await self.client.post("/echo", auth=AUTH, data=form)
+        body = await response.read()
+        self.assertIn(b"RIFF-reference-bytes", body)
+        self.assertIn(b"Reference transcript", body)
+        self.assertEqual(body, self.received[2])
+
+    async def test_audio_stream_arrives_before_generation_finishes(self):
+        response = await self.client.post("/stream", auth=AUTH)
+        first = await asyncio.wait_for(response.content.readexactly(17), timeout=2)
+        self.assertEqual(first, b"first audio chunk")
+        self.assertIn(SESSION_COOKIE, response.cookies)
+        self.release_audio.set()
+        self.assertEqual(await response.read(), b"last audio chunk")
+
+    async def test_upstream_error_status_and_message_preserved(self):
+        response = await self.client.post("/bad", auth=AUTH)
+        self.assertEqual(response.status, 400)
+        self.assertEqual((await response.json())["detail"], "Text is too long")
+
+    async def test_cross_origin_post_rejected(self):
+        response = await self.client.post("/echo", auth=AUTH, headers={"Origin": "https://attacker.example"}, json={})
         self.assertEqual(response.status, 403)
+        self.assertIsNone(self.received)
 
-    async def test_binary_websocket_bidirectional_bridge_and_disconnect(self):
-        ws = await self.client.ws_connect("/api/chat?voice_prompt=NATF0.pt", auth=AUTH)
-        self.assertEqual((await ws.receive(timeout=2)).data, b"\x00")
-        payload = bytes(range(256))
-        await ws.send_bytes(payload)
-        self.assertEqual((await ws.receive(timeout=2)).data, payload)
-        await ws.close()
+    async def test_public_origin_survives_host_rewriting_and_sets_secure_cookie(self):
+        async with TestClient(TestServer(create_app("persona", PASSWORD,
+                str(self.upstream.make_url("/")).rstrip("/"), public_origin="https://voice.example"))) as client:
+            response = await client.post("/echo", auth=AUTH, json={"text": "hello"},
+                                        headers={"Host": "internal:8080", "Origin": "https://voice.example"})
+            self.assertEqual(response.status, 200)
+            self.assertTrue(response.cookies[SESSION_COOKIE]["secure"])
 
-    async def test_browser_session_authenticates_websocket_without_basic_header(self):
-        login = await self.client.get("/", auth=AUTH)
-        self.assertIn(SESSION_COOKIE, login.cookies)
-        self.assertTrue(login.cookies[SESSION_COOKIE]["httponly"])
-        self.assertEqual(login.cookies[SESSION_COOKIE]["samesite"], "Strict")
-        ws = await self.client.ws_connect("/api/chat?voice_prompt=NATF0.pt")
-        self.assertEqual((await ws.receive(timeout=2)).data, b"\x00")
-        await ws.close()
-
-    async def test_modified_and_expired_sessions_are_rejected(self):
-        login = await self.client.get("/", auth=AUTH)
-        token = login.cookies[SESSION_COOKIE].value
-        self.client.session.cookie_jar.clear()
-        invalid = token[:-1] + ("0" if token[-1] != "0" else "1")
-        response = await self.client.get("/", headers={"Cookie": f"{SESSION_COOKIE}={invalid}"})
+    async def test_forged_and_expired_sessions_rejected(self):
+        response = await self.client.get("/ui", headers={"Cookie": f"{SESSION_COOKIE}=1.fake.signature"})
         self.assertEqual(response.status, 401)
-        with patch("deploy.gateway.time.time", return_value=time.time() + 3601):
-            response = await self.client.get("/", headers={"Cookie": f"{SESSION_COOKIE}={token}"})
-            self.assertEqual(response.status, 401)
+        response = await self.client.get("/ui", auth=AUTH)
+        with patch("deploy.gateway.time.time", return_value=time.time() + 4000):
+            response = await self.client.get("/ui")
+        self.assertEqual(response.status, 401)
 
-    async def test_public_origin_survives_proxy_host_rewrite(self):
-        app = create_app("persona", PASSWORD, str(self.upstream.make_url("/")).rstrip("/"),
-                         public_origin="https://voice.example")
-        async with TestClient(TestServer(app)) as client:
-            login = await client.get("/", auth=AUTH)
-            self.assertTrue(login.cookies[SESSION_COOKIE]["secure"])
-            token = login.cookies[SESSION_COOKIE].value
-            headers = {"Host": "internal-backend:8080", "Origin": "https://voice.example",
-                       "Cookie": f"{SESSION_COOKIE}={token}"}
-            ws = await client.ws_connect("/api/chat?voice_prompt=NATF0.pt", headers=headers)
-            self.assertEqual((await ws.receive(timeout=2)).data, b"\x00")
-            await ws.close()
-            headers["Origin"] = "https://other.example"
-            response = await client.get("/api/chat?voice_prompt=NATF0.pt", headers=headers)
-            self.assertEqual(response.status, 403)
-
-    def test_rejects_untrusted_public_origin_configuration(self):
-        for origin in ("https://user:password@voice.example", "https://voice.example/path",
-                       "https://voice.example?other=1", "file:///tmp"):
-            with self.assertRaises(ValueError):
-                create_app(password=PASSWORD, public_origin=origin)
-
-    def test_refuses_missing_or_weak_web_password(self):
+    def test_bad_configuration_rejected(self):
         with self.assertRaises(ValueError):
             create_app(password="short")
+        for origin in ("https://user:pass@voice.example", "https://voice.example/path", "file:///tmp"):
+            with self.assertRaises(ValueError):
+                create_app(password=PASSWORD, public_origin=origin)

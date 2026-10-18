@@ -8,15 +8,15 @@ if [ "${PUBLISH_IMAGE:-false}" = true ]; then build_mode=--push; fi
 # Build logs contain no HF/RunPod secrets: none are supplied during image builds.
 if docker buildx build --progress plain "$build_mode" \
   --label org.opencontainers.image.source=https://github.com/Themonisbig/translator- \
-  -t "$image_repo:main" -t "$image_repo:$image_sha" . > /tmp/personaplex-image-build.log 2>&1; then
-  tail -20 /tmp/personaplex-image-build.log
+  -t "$image_repo:main" -t "$image_repo:$image_sha" . > /tmp/fish-image-build.log 2>&1; then
+  tail -20 /tmp/fish-image-build.log
 else
   build_status=$?
-  tail -80 /tmp/personaplex-image-build.log
+  tail -80 /tmp/fish-image-build.log
   if [ "${GITHUB_ACTIONS:-false}" = true ]; then
     python3 - <<'PYANNOTATION'
 from pathlib import Path
-lines = Path('/tmp/personaplex-image-build.log').read_text(errors='replace').splitlines()
+lines = Path('/tmp/fish-image-build.log').read_text(errors='replace').splitlines()
 message = '\n'.join(lines[-65:])[-12000:]
 message = message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
 print('::error title=Container build diagnostic::' + message)

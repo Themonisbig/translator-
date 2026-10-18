@@ -5,3 +5,8 @@
 .env
 .env.*
 *.log
+**/.venv
+**/checkpoints
+**/*.pth
+**/*.safetensors
+**/*.wav
