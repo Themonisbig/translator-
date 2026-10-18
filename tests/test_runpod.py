@@ -15,14 +15,6 @@ class RunPodTests(unittest.TestCase):
         self.assertEqual(payload["gpu"]["minCudaVersion"], "12.8")
         self.assertEqual(payload["env"]["FISH_DRAMA3_FP8_EXPERTS"], "1")
 
-    def test_forward_compat_uses_official_libraries_and_preserves_gpu_restrictions(self):
-        payload = build_payload(IMAGE, gpu="NVIDIA L40S", forward_compat=True)
-        self.assertEqual(payload["gpu"]["minCudaVersion"], "12.4")
-        self.assertIn("/usr/local/cuda/compat", payload["env"]["LD_LIBRARY_PATH"])
-        self.assertNotIn("NVIDIA_DISABLE_REQUIRE", payload["env"])
-        with self.assertRaises(ValueError):
-            build_payload(IMAGE, forward_compat=True)
-
     def test_old_gpu_and_unsafe_registry_rejected(self):
         for gpu in ("NVIDIA A40", "NVIDIA RTX A6000", "NVIDIA GeForce RTX 4090"):
             with self.assertRaises(ValueError):

@@ -1,49 +1,43 @@
 # Fish Drama 3 deployment status
 
-Updated 2026-10-18. The PersonaPlex deployment has been replaced in this repository.
-Previous PersonaPlex GPU results do not validate Fish Drama 3 and were removed.
+Updated 2026-10-18. PersonaPlex has been replaced with official Fish Audio Drama 3.
 
-- Official Fish Drama 3 source and model revisions pinned in [UPSTREAM.md](../UPSTREAM.md).
-- Existing RunPod secret bindings and public container registry are reused.
-- Active Pod: **omzyotzgavt78h**, `fish-drama3-tts`, one Community NVIDIA L40S.
-  GPU billing is active at the confirmed **$0.79/hour**, plus storage.
-- Expected HTTPS address (not yet validated):
-  https://omzyotzgavt78h-8080.proxy.runpod.net/ui
-- Existing login: `persona` / your existing RunPod `personaplex_web` password.
-- State: pulling the image, then downloading the official model and warming up.
-- No real Drama 3 GPU synthesis or voice-cloning test has run yet.
-- Compatible Community RTX 6000 Ada was quoted at $0.74/hour but sold out.
-  Latest available compatible stock: **L40S at $0.79/hour** plus roughly $0.017/hour
-  storage (about $0.81/hour total). The user explicitly approved deploying and
-  testing one Pod at up to $0.79/hour GPU plus this storage on 2026-10-18.
-- Planned attached storage: 80GB persistent model cache and 40GB container disk;
-  there is no separately created network volume.
+**No Pod is currently running and no live browser URL exists.** The attempted
+Community L40S Pod `omzyotzgavt78h` and its empty attached storage were deleted after
+CUDA initialization failed. The account was checked afterward: zero Pods and zero
+network volumes. Earlier usage was billable; deleting it ends ongoing resource costs.
+
+The image started, but CUDA `cuInit` returned 999 and PyTorch reported no usable GPU.
+The result was the same with the host R550 driver, the official compatibility
+libraries, and explicit selection of the allocated GPU. Device mappings and UVM
+nodes were present. No model weights were downloaded and no Drama 3 audio was
+produced. See [failed-gpu-check.json](failed-gpu-check.json).
+
+A native-compatible **Secure L40 at $0.82/hour GPU** is currently listed with host
+CUDA 13.2, 250GB RAM and 32 vCPUs. Planned storage adds about $0.017/hour: roughly
+$0.84/hour total. It exceeds the approved $0.79/hour GPU cap by $0.03/hour, so no
+replacement has been created without further authorization.
 
 Verified without a GPU:
 
-- 18 CPU tests passed: authentication, signed/expired cookies, proxy-origin handling,
-  streaming audio transport, JSON/multipart uploads, hardware guards and spending limits.
+- 17 CPU tests passed: secure login/session cookies, proxy origins, streaming audio,
+  JSON/multipart uploads, GPU guards, stock filtering and spending ceilings.
 - Official UI TypeScript/Vite production build passed.
-- Actual Chromium at desktop (1280px) and mobile (390px) widths passed login,
-  generation POST, test-tone WAV playback/download and visible generation failure.
-- All 137 vendored upstream files match the official pinned source unchanged.
-- RunPod inventory: zero Pods and zero network volumes at the time of this check.
+- Chromium at 1280px and 390px passed login, generation POST, test-tone WAV playback,
+  downloads and visible errors. These are fixtures, not model inference.
+- All 137 vendored files match the pinned official Fish source unchanged.
+- CUDA container dependency checks, official CLI and model imports passed in
+  [GitHub Actions](https://github.com/Themonisbig/translator-/actions/runs/39123136762).
+- The deployment payload validates against the current official RunPod v2 schema.
 
-The browser tests use a clearly labeled audio fixture. GPU inference remains untested.
-The CUDA container build, dependency checks, official server CLI and model imports
-passed in [GitHub Actions](https://github.com/Themonisbig/translator-/actions/runs/39123136762).
-The published image is anonymously pullable:
+Public, anonymously pullable image:
 
 `ghcr.io/themonisbig/personaplex-voice:a51dee1947871d662ddc76b46f6270dbf9fd72a5`
 
 OCI index digest: `sha256:35dda70e8b9a976c8bff388d2eb56eba7a5cedc48e330d1ef06fa6e06697d2f3`.
 
-The deployment payload was also validated against the current official RunPod v2
-OpenAPI schema, including a minimum host CUDA version of 12.8. The latest script and 18 CPU tests passed, including the opt-in NVIDIA forward
-compatibility path for R550/CUDA 12.4 datacenter L40/L40S hosts. Native CUDA 12.8
-Community capacity was unavailable; the deployed image uses its preinstalled
-NVIDIA `cuda-compat-12-8` userspace driver. GPU inference remains to be verified.
-
-Do not create another Pod while this one is starting. See [the RunPod guide](RUNPOD.md).
-GPU synthesis and the public HTTPS URL remain unverified until the actual model
-smoke check passes; the prior PersonaPlex audio check is not reused.
+The existing registry name and RunPod secret bindings are retained for reuse.
+See [the RunPod guide](RUNPOD.md) and [upstream versions/license](../UPSTREAM.md).
+The script now defaults to Secure L40 and requires native CUDA 12.8+ inventory.
+Its default spending ceiling stays conservatively at $0.50/hour until explicitly
+raised for a paid creation. GPU synthesis remains unverified.
