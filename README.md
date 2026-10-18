@@ -1,5 +1,7 @@
 # Fish Audio Drama 3 — private browser TTS on RunPod
 
+**Built with Fish Audio.**
+
 Run the official **Fish Audio Drama 3 (35B-A3B)** model on a cloud NVIDIA GPU.
 The official Fish browser demo lets you type expressive text, optionally upload
 voice references with transcripts, then play or download generated speech.

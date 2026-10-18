@@ -1,0 +1,10 @@
+These Fish Audio Materials are licensed under the Fish Audio Community License, Version 1.0. Copyright © 39 AI, INC. All Rights Reserved.
+
+Built with Fish Audio.
+
+Official Fish Speech source is included unchanged at upstream commit
+541566932abbaebcb0a40e562a1f846738383f38. The enclosing project adds a Docker
+wrapper, authenticated HTTP gateway, startup supervision, RunPod provisioning,
+documentation and tests. The upstream model implementation and browser UI
+have not been modified. The official license is at
+/app/fish-speech/LICENSE in the container and vendor/fish-speech/LICENSE in Git.
