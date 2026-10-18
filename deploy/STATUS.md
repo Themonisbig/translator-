@@ -2,22 +2,25 @@
 
 Updated 2026-10-18. PersonaPlex has been replaced with official Fish Audio Drama 3.
 
-**No Pod is currently running and no live browser URL exists.** The attempted
-Community L40S Pod `omzyotzgavt78h` and its empty attached storage were deleted after
-CUDA initialization failed. The account was checked afterward: zero Pods and zero
-network volumes. Earlier usage was billable; deleting it ends ongoing resource costs.
+**Active Pod: `v44qwhhq2i3ivi`, one Secure Cloud NVIDIA L40 in US-KS-2.**
+The user approved up to $0.82/hour GPU plus storage; the actual GPU rate is confirmed
+at **$0.82/hour**. Attached storage: 80GB persistent plus 40GB container disk, adding
+about $0.017/hour while running (roughly $0.84/hour total). GPU billing is active.
 
-The image started, but CUDA `cuInit` returned 999 and PyTorch reported no usable GPU.
-The result was the same with the host R550 driver, the official compatibility
-libraries, and explicit selection of the allocated GPU. Device mappings and UVM
-nodes were present. No model weights were downloaded and no Drama 3 audio was
-produced. See [failed-gpu-check.json](failed-gpu-check.json).
+Native host CUDA: **13.0**, meeting the image's CUDA 12.8 requirement. Host RAM:
+250GB; vCPUs: 32. The Pod is pulling its image, then will download the official model
+and warm up. Do not create duplicates while this one starts.
 
-A native-compatible **Secure L40 at $0.82/hour GPU** was listed with host
-CUDA 13.2, 250GB RAM and 32 vCPUs, but went out of stock on the latest check. Planned storage adds about $0.017/hour: roughly
-$0.84/hour total. It exceeds the approved $0.79/hour GPU cap by $0.03/hour, so no
-replacement has been created without further authorization. Matching GPU capacity
-will also need to be rechecked before creation.
+Expected browser address (not yet validated):
+https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui
+
+Login: `persona` with your existing RunPod `personaplex_web` password.
+No Drama 3 speech has passed a GPU test yet; wait for the actual GPU smoke result.
+
+The earlier Community L40S Pod `omzyotzgavt78h` and its empty storage were deleted
+after CUDA initialization failed, before any model download or audio generation.
+See [failed-gpu-check.json](failed-gpu-check.json). This replacement uses native
+CUDA support and the normal NVIDIA driver path.
 
 Verified without a GPU:
 
