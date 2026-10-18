@@ -7,8 +7,10 @@ Previous PersonaPlex GPU results do not validate Fish Drama 3 and were removed.
 - Existing RunPod secret bindings and public container registry are reused.
 - No Fish GPU Pod has been created. No live browser URL exists yet.
 - No real Drama 3 GPU synthesis or voice-cloning test has run yet.
-- Compatible Community RTX 6000 Ada stock was quoted at $0.74/hour plus storage.
-  Creating it requires authorization above the earlier GPU budget.
+- Compatible Community RTX 6000 Ada was quoted at $0.74/hour but sold out.
+  Latest available compatible stock: **L40S at $0.79/hour** plus roughly $0.017/hour
+  storage (about $0.81/hour total). Creating it requires authorization above the
+  earlier GPU budget; a cost approval question is pending.
 - Planned attached storage: 80GB persistent model cache and 40GB container disk;
   there is no separately created network volume.
 

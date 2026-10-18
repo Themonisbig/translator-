@@ -10,14 +10,15 @@ The setup also requires a host reporting CUDA 12.8 or newer.
 Do not enable `--compile` for Drama 3.
 
 On 2026-10-18, the lowest available compatible Community GPU quote was
-**$0.74/hour** for RTX 6000 Ada, above the previous authorized budget. Prices and
-stock change. Check before creating; no higher rate is implicitly approved.
+**$0.74/hour** for RTX 6000 Ada initially; that stock then sold out. The latest
+available compatible quote is **$0.79/hour for L40S**, above the previous authorized
+budget. Prices and stock change. Check before creating; no higher rate is implicitly approved.
 
 The script requests 80GB persistent `/workspace` (roughly 40GB model weights) and
 40GB container disk. **Storage is billed separately.** The current official
 [RunPod pricing](https://docs.runpod.io/pods/pricing) lists $0.10/GB/month for both
 while running: about **$12/month equivalent**, or **$0.017/hour** for 120GB total.
-With a $0.74 GPU, that is roughly **$0.76/hour while running**. A stopped 80GB volume
+With a $0.79 GPU, that is roughly **$0.81/hour while running**. A stopped 80GB volume
 is $0.20/GB/month: **$16/month equivalent** while it remains. Billing is prorated;
 RunPod's live creation quote is authoritative. Stopping ends GPU charges but leaves paid persistent storage.
 Terminate/delete the Pod to delete its attached volume when finished. No network
@@ -43,7 +44,7 @@ https://github.com/Themonisbig/translator-/actions
 Use the immutable full commit tag from the successful container build:
 
 ```bash
-python scripts/runpod_setup.py --quote
+python scripts/runpod_setup.py --quote --gpu 'NVIDIA L40S'
 python scripts/runpod_setup.py --image ghcr.io/themonisbig/personaplex-voice:COMMIT_SHA
 ```
 
@@ -53,8 +54,8 @@ rate, create exactly one Pod (example ceiling, not an authorization):
 ```bash
 python scripts/runpod_setup.py \
   --image ghcr.io/themonisbig/personaplex-voice:COMMIT_SHA \
-  --gpu 'NVIDIA RTX 6000 Ada Generation' \
-  --max-hourly 0.74 --create --accept-billing
+  --gpu 'NVIDIA L40S' \
+  --max-hourly 0.79 --create --accept-billing
 ```
 
 The legacy public image package is reused to avoid needing a new registry login.
