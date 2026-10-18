@@ -13,6 +13,16 @@ Enter a short sentence, select **wav**, then **Generate Audio** and play the res
 For expressive speech try `[excited] Wow, this is amazing! I am so happy today!`.
 Voice references with exact transcripts are supported by the official UI.
 
+## Pending speed change (not yet deployed)
+
+The audio decoder can now run on the GPU (`FISH_CODEC_DEVICE=auto`). Decoding on the
+CPU was the largest part of each request: about 5.5 s of CPU time for the 4.37 s test
+clip, measured on 4 CPU threads. Chunks over 256 frames (about 12 s) still decode on the CPU, and so does any chunk
+that runs the GPU out of memory. It is tested on CPU against the real engine and codec
+architecture, but **not yet on the GPU**. The running Pod still uses the image below
+with `FISH_CODEC_DEVICE=cpu`. To deploy it, use the new image and set the Pod's
+`FISH_CODEC_DEVICE` to `auto`.
+
 ## Active resources and cost
 
 One Pod: **`v44qwhhq2i3ivi`**, Secure Cloud **NVIDIA L40**, US-KS-2, native host CUDA

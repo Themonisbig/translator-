@@ -39,8 +39,8 @@ measure acting quality or prove support for every browser/device.
 
 Follow [the RunPod guide](deploy/RUNPOD.md). A single 48GB **RTX 6000 Ada, L40 or L40S**
 GPU is required. **A40 and RTX A6000 are unsuitable for this FP8 configuration.**
-The official audio codec uses the cloud CPU in FP32 to leave GPU memory for the
-Drama 3 model. Your personal computer only runs the browser.
+The official audio codec decodes clips of up to about 12 seconds per text chunk on
+the GPU. Longer chunks use the cloud CPU in FP32 so they don't run the GPU out of memory. Your personal computer only runs the browser.
 The setup script is dry-run by default, reuses existing secure bindings, and
 checks stock and the current GPU quote against an explicit spending ceiling.
 The script's conservative $0.50/hour default rejects current $0.82/hour native-compatible stock.

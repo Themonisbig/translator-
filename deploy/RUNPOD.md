@@ -12,14 +12,21 @@ failed CUDA initialization with both its host driver and compatibility libraries
 That Pod and its empty storage were deleted. Do not rely on that configuration.
 Do not enable `--compile` for Drama 3.
 
-The 48GB profile uses `FISH_CODEC_DEVICE=cpu` and `FISH_CPU_THREADS=8`: the small
-official DAC audio codec runs in FP32 on the cloud host CPU, while Drama 3's FP8 backbone
-and audio-token tower stay on CUDA with graphs enabled. The deployment adapter
-only selects codec placement/precision; upstream source and model weights remain unchanged.
-Full 1024-frame audio decoding exhausted L40 VRAM when the codec shared the GPU,
-including with CUDA graphs disabled. CPU decoding avoids that GPU activation peak
-at the cost of extra decoding time. `FISH_CODEC_DEVICE=cuda` is available for GPUs
-with sufficient additional VRAM; it is not the default 48GB configuration.
+The 48GB profile uses `FISH_CODEC_DEVICE=auto` and `FISH_CPU_THREADS=8`. The small
+official DAC audio codec decodes clips of up to `FISH_CODEC_GPU_MAX_FRAMES=256` frames
+(about 12 seconds of audio per text chunk) on the GPU in the model's BF16. Longer
+chunks, or any GPU out-of-memory during decoding, use an FP32 copy of the same codec
+on the host CPU. Drama 3's FP8 backbone and audio-token tower stay on CUDA with graphs
+enabled. The deployment adapter only selects codec placement/precision; upstream
+source and model weights remain unchanged.
+
+Why: CPU decoding was the largest part of each request. The 4.37-second test clip
+took 7.93 seconds end to end, and decoding that many frames (94) takes about 5.5
+seconds on 4 CPU threads. Measured decoding activations grow about 2.3 MiB per frame
+in BF16 (0.7 GiB at 256 frames, 2.4 GiB at 1024). Full 1024-frame decoding exhausted
+L40 VRAM when it shared the GPU, so long chunks stay on the CPU.
+`FISH_CODEC_DEVICE=cpu` restores the previous all-CPU codec; `cuda` keeps the upstream
+all-GPU codec for GPUs with spare VRAM.
 
 On 2026-10-18, a native-compatible **Secure Cloud L40** was available at
 **$0.82/hour GPU**, with host CUDA 13.2, 250GB host RAM and 32 vCPUs. The user has explicitly approved up to $0.82/hour GPU plus storage.

@@ -20,7 +20,7 @@ class RunPodTests(unittest.TestCase):
         self.assertEqual(payload["gpu"]["minCudaVersion"], "12.8")
         self.assertEqual(payload["env"]["FISH_DRAMA3_FP8_EXPERTS"], "1")
         self.assertEqual(payload["env"]["FISH_DRAMA3_CUDA_GRAPH"], "1")
-        self.assertEqual(payload["env"]["FISH_CODEC_DEVICE"], "cpu")
+        self.assertEqual(payload["env"]["FISH_CODEC_DEVICE"], "auto")
 
     def test_old_gpu_and_unsafe_registry_rejected(self):
         for gpu in ("NVIDIA A40", "NVIDIA RTX A6000", "NVIDIA GeForce RTX 4090"):

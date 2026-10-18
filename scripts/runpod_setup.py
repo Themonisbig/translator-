@@ -28,7 +28,7 @@ def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web
     env = {"WEB_PASSWORD": secret_ref(web_secret), "WEB_USERNAME": "persona",
            "HF_HOME": "/workspace/huggingface", "MODEL_DIR": "/workspace/checkpoints/drama-3",
            "FISH_DRAMA3_FP8_EXPERTS": "1", "FISH_DRAMA3_CUDA_GRAPH": "1",
-           "FISH_CODEC_DEVICE": "cpu", "FISH_CPU_THREADS": "8",
+           "FISH_CODEC_DEVICE": "auto", "FISH_CPU_THREADS": "8",
            "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True", "RUN_GPU_SMOKE": "1"}
     if hf_secret:
         env["HF_TOKEN"] = secret_ref(hf_secret)

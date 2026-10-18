@@ -31,7 +31,7 @@ RUN --mount=type=secret,id=build_ca \
 ENV PATH="/app/fish-speech/.venv/bin:$PATH" \
     HF_HOME=/workspace/huggingface WEB_USERNAME=persona \
     MODEL_DIR=/workspace/checkpoints/drama-3 FISH_DRAMA3_FP8_EXPERTS=1 \
-    FISH_CODEC_DEVICE=cpu FISH_CPU_THREADS=8 FISH_DRAMA3_CUDA_GRAPH=1 \
+    FISH_CODEC_DEVICE=auto FISH_CPU_THREADS=8 FISH_DRAMA3_CUDA_GRAPH=1 \
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 COPY --from=browser /webui/dist /app/fish-speech/awesome_webui/dist
 COPY deploy/ /app/deploy/
