@@ -8,7 +8,7 @@ Previous PersonaPlex GPU results do not validate Fish Drama 3 and were removed.
 - No Fish GPU Pod has been created. No live browser URL exists yet.
 - No real Drama 3 GPU synthesis or voice-cloning test has run yet.
 - Compatible Community RTX 6000 Ada stock was quoted at $0.74/hour plus storage.
-  Creating it requires authorization above the earlier $0.50/hour GPU ceiling.
+  Creating it requires authorization above the earlier GPU budget.
 - Planned attached storage: 80GB persistent model cache and 40GB container disk;
   there is no separately created network volume.
 
@@ -23,4 +23,18 @@ Verified without a GPU:
 - RunPod inventory: zero Pods and zero network volumes at the time of this check.
 
 The browser tests use a clearly labeled audio fixture. GPU inference remains untested.
-The CUDA container build/publication is pending GitHub Actions.
+The CUDA container build, dependency checks, official server CLI and model imports
+passed in [GitHub Actions](https://github.com/Themonisbig/translator-/actions/runs/39123136762).
+The published image is anonymously pullable:
+
+`ghcr.io/themonisbig/personaplex-voice:a51dee1947871d662ddc76b46f6270dbf9fd72a5`
+
+OCI index digest: `sha256:35dda70e8b9a976c8bff388d2eb56eba7a5cedc48e330d1ef06fa6e06697d2f3`.
+
+The deployment payload was also validated against the current official RunPod v2
+OpenAPI schema, including a minimum host CUDA version of 12.8. The latest script
+and 17 CPU tests passed after adding that host compatibility constraint.
+
+To deploy after authorizing the higher current rate, use the immutable image above
+with the commands in [the RunPod guide](RUNPOD.md). GPU synthesis and the live HTTPS
+URL remain pending paid deployment; the prior PersonaPlex audio check is not reused.

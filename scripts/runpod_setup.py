@@ -32,7 +32,7 @@ def build_payload(image, gpu=COMPATIBLE_GPUS[0], hf_secret="personaplex_hf", web
         env["HF_TOKEN"] = secret_ref(hf_secret)
     return {
         "name": "fish-drama3-tts", "image": image, "cloud": cloud, "startSsh": False,
-        "gpu": {"id": gpu, "count": 1, "minRamPerGpu": 64, "minVcpuCountPerGpu": 8},
+        "gpu": {"id": gpu, "count": 1, "minRamPerGpu": 64, "minVcpuCountPerGpu": 8, "minCudaVersion": "12.8"},
         "disk": 40, "mounts": {"persistent": {"size": 80, "path": "/workspace"}},
         "ports": ["8080/http"], "env": env,
     }

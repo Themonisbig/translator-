@@ -33,7 +33,7 @@ Follow [the RunPod guide](deploy/RUNPOD.md). A single 48GB **RTX 6000 Ada, L40 o
 GPU is required. **A40 and RTX A6000 are unsuitable for this FP8 configuration.**
 The setup script is dry-run by default, reuses existing secure bindings, and
 checks stock and the current GPU quote against an explicit spending ceiling.
-The previous $0.50/hour ceiling will reject current $0.74/hour compatible stock.
+The script's conservative $0.50/hour default rejects current $0.74/hour compatible stock.
 
 Public weights need no new Fish API key. An existing Hugging Face token is optional
 for download rate limits. Never commit credentials. Only the authenticated gateway

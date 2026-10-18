@@ -6,10 +6,11 @@ Use one **NVIDIA RTX 6000 Ada Generation**, **L40**, or **L40S**, with 48GB VRAM
 at least 64GB host RAM and 8 vCPUs. Drama 3's official FP8 kernels require SM89+.
 A40 and RTX A6000 are SM86 and cannot run this single-GPU configuration.
 Python 3.12 / Torch 2.8 / CUDA 12.8 follow the official dependency lockfile.
+The setup also requires a host reporting CUDA 12.8 or newer.
 Do not enable `--compile` for Drama 3.
 
 On 2026-10-18, the lowest available compatible Community GPU quote was
-**$0.74/hour** for RTX 6000 Ada, above the previous $0.50/hour limit. Prices and
+**$0.74/hour** for RTX 6000 Ada, above the previous authorized budget. Prices and
 stock change. Check before creating; no higher rate is implicitly approved.
 
 The script requests 80GB persistent `/workspace` (roughly 40GB model weights) and
