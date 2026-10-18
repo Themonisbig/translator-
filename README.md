@@ -12,7 +12,7 @@ would need additional speech-recognition and language-model components.
 
 ## Current readiness
 
-Real Drama 3 GPU synthesis has passed through the authenticated public HTTPS
+Real Drama 3 GPU synthesis has passed through the public HTTPS
 endpoint. Plain and excited sentences matched their requested words in an
 independent transcript check. See [deployment status and evidence](deploy/STATUS.md)
 for the current Pod, build and measured timings. CPU/browser fixture checks are

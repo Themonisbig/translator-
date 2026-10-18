@@ -1,0 +1,33 @@
+{
+  "pod_id": "v44qwhhq2i3ivi",
+  "browser_url": "https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui",
+  "image": "ghcr.io/themonisbig/personaplex-voice:963aa190e0d91221d223a9eabb53280ae99182f5",
+  "image_index_digest": "sha256:3fa5299d45b30fd88c832cd9b62bc479db148895fbbe853682ec2df4c8b835b5",
+  "ui_http_status": 200,
+  "www_authenticate_header": false,
+  "credentials_sent": false,
+  "auth_cookie_required": false,
+  "gpu_smoke": {
+    "model": "fishaudio/drama-3",
+    "public_https": true,
+    "cookie_auth": false,
+    "auth_required": false,
+    "sample_rate": 44100,
+    "audio_seconds": 4.37,
+    "bytes": 385068,
+    "peak": 0.5215,
+    "generation_seconds": 8.06,
+    "generated_at_utc": "2026-10-18T13:07:54Z"
+  },
+  "cpu_tests_passed": 22,
+  "browser_fixture_modes": [
+    "protected",
+    "public_without_credentials_or_cookies"
+  ],
+  "browser_fixture_widths": [
+    1280,
+    390
+  ],
+  "ci_run": "https://github.com/Themonisbig/translator-/actions/runs/39129295591",
+  "note": "Real GPU speech was generated anonymously through public HTTPS. Browser viewport playback checks separately used fixture audio. No physical phone test was performed."
+}

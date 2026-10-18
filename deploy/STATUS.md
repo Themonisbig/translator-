@@ -1,13 +1,14 @@
 # Fish Drama 3 deployment status
 
-Updated **2026-10-18, 12:44 UTC**. Official Fish Drama 3 is deployed and generating
+Updated **2026-10-18, 13:08 UTC**. Official Fish Drama 3 is deployed and generating
 speech on the cloud GPU. PersonaPlex has been replaced.
 
 **Open the private demo:** https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui
 
-The user has authorized removing login. The deployment is being updated to
-`WEB_AUTH_REQUIRED=0`; anyone with this URL can use the paid GPU. Existing secret
-bindings are retained for optional password protection later.
+**No login is required**, as authorized by the user (`WEB_AUTH_REQUIRED=0`). Anyone
+with this URL can use the paid GPU. Existing secret bindings are retained for
+optional password protection later. Anonymous HTTPS speech generation passed;
+see [public-access-check.json](public-access-check.json) for current-image evidence.
 Enter a short sentence, select **wav**, then **Generate Audio** and play the result.
 For expressive speech try `[excited] Wow, this is amazing! I am so happy today!`.
 Voice references with exact transcripts are supported by the official UI.
@@ -25,7 +26,7 @@ There is no network volume created by this project. Keep existing secret binding
 
 ## Actual GPU evidence
 
-The final published image passed real speech requests through public HTTPS with
+The initial image (`ed0f502…`) passed real speech requests through public HTTPS with
 the same login cookie used by the browser. An independent CPU Whisper tiny.en
 cross-check matched the words in all three clips:
 
@@ -56,14 +57,14 @@ voice can vary; start with short sentences and retry or supply a clean reference
 
 ## Other verified checks and limits
 
-- **20 CPU tests passed:** secure login/cookies, origin checks across a proxy,
+- **22 CPU tests passed:** optional login/cookies, anonymous UI/API access, origin checks across a proxy,
   streaming, uploads, GPU guards, stock/price ceilings and codec placement.
 - Official TypeScript/Vite production build passed.
-- Chromium at 1280px and 390px passed login, generation POST, WAV playback,
-  downloads and visible errors using fixture audio. These were not GPU model tests.
+- Chromium at 1280px and 390px passed both protected and no-login modes, generation
+  POST, WAV playback, downloads and visible errors using fixture audio. These were not GPU model tests.
 - All **137 vendored files** match the pinned official source unchanged.
 - Final CUDA image dependency checks, official CLI, adapter CLI and model imports
-  passed in [GitHub Actions](https://github.com/Themonisbig/translator-/actions/runs/39127537272).
+  passed in [GitHub Actions](https://github.com/Themonisbig/translator-/actions/runs/39129295591).
 - The RunPod deployment payload matches the current v2 schema. Native CUDA stock
   filtering and the spending ceiling prevent incompatible or over-budget creation.
 
@@ -75,9 +76,9 @@ paragraphs, concurrent users and subjective acting/voice similarity remain untes
 
 Public image, verified anonymously pullable and running on the Pod:
 
-`ghcr.io/themonisbig/personaplex-voice:ed0f50261c992f4d6e2371f6f66f103d2a845beb`
+`ghcr.io/themonisbig/personaplex-voice:963aa190e0d91221d223a9eabb53280ae99182f5`
 
-OCI index: `sha256:e73f0a1d0be7f28d1c10e2660c43dc1f443f4db1b4888eb10437d56db5da38e0`.
+OCI index: `sha256:3fa5299d45b30fd88c832cd9b62bc479db148895fbbe853682ec2df4c8b835b5`.
 
 Normal startup is `python /app/deploy/launch.py`; no temporary model-code override
 is needed. Model weights are cached in `/workspace/checkpoints/drama-3`. Existing
