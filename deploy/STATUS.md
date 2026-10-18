@@ -1,50 +1,88 @@
 # Fish Drama 3 deployment status
 
-Updated 2026-10-18. PersonaPlex has been replaced with official Fish Audio Drama 3.
+Updated **2026-10-18, 12:44 UTC**. Official Fish Drama 3 is deployed and generating
+speech on the cloud GPU. PersonaPlex has been replaced.
 
-**Active Pod: `v44qwhhq2i3ivi`, one Secure Cloud NVIDIA L40 in US-KS-2.**
-The user approved up to $0.82/hour GPU plus storage; the actual GPU rate is confirmed
-at **$0.82/hour**. Attached storage: 80GB persistent plus 40GB container disk, adding
-about $0.017/hour while running (roughly $0.84/hour total). GPU billing is active.
+**Open the private demo:** https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui
 
-Native host CUDA: **13.0**, meeting the image's CUDA 12.8 requirement. Host RAM:
-250GB; vCPUs: 32. The pinned official model is downloaded and loads on CUDA.
-Initial public HTTPS requests generated audio tokens but failed during GPU DAC
-decoding with out-of-memory errors at 1024 frames, with graphs enabled and disabled.
-The deployment is now testing official DAC CPU FP32 decoding, retaining the speech
-model and audio-token tower on CUDA. Do not create duplicate Pods.
+Sign in as **persona** using the existing RunPod `personaplex_web` password.
+Enter a short sentence, select **wav**, then **Generate Audio** and play the result.
+For expressive speech try `[excited] Wow, this is amazing! I am so happy today!`.
+Voice references with exact transcripts are supported by the official UI.
 
-Browser address (login and UI validated; successful speech still pending):
-https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui
+## Active resources and cost
 
-Login: `persona` with your existing RunPod `personaplex_web` password.
-No Drama 3 speech has passed a GPU test yet; wait for the actual GPU smoke result.
+One Pod: **`v44qwhhq2i3ivi`**, Secure Cloud **NVIDIA L40**, US-KS-2, native host CUDA
+13.0, 250GB host RAM, 32 vCPUs. Confirmed GPU rate **$0.82/hour**, within the user's
+explicit approval. 80GB persistent `/workspace` plus 40GB container disk add about
+$0.017/hour while running: approximately **$0.84/hour total**. GPU billing is active.
 
-The earlier Community L40S Pod `omzyotzgavt78h` and its empty storage were deleted
-after CUDA initialization failed, before any model download or audio generation.
-See [failed-gpu-check.json](failed-gpu-check.json). This replacement uses native
-CUDA support and the normal NVIDIA driver path.
+Stopping ends GPU charges but retains the 80GB volume at about **$16/month**
+(prorated). Terminating/deleting removes the attached storage and model cache.
+There is no network volume created by this project. Keep existing secret bindings.
 
-Verified without a GPU:
+## Actual GPU evidence
 
-- 20 CPU tests passed: secure login/session cookies, proxy origins, streaming audio,
-  JSON/multipart uploads, GPU guards, stock filtering, spending ceilings and codec placement.
-- Official UI TypeScript/Vite production build passed.
-- Chromium at 1280px and 390px passed login, generation POST, test-tone WAV playback,
-  downloads and visible errors. These are fixtures, not model inference.
-- All 137 vendored files match the pinned official Fish source unchanged.
-- CUDA container dependency checks, official CLI and model imports passed in
-  [GitHub Actions](https://github.com/Themonisbig/translator-/actions/runs/39123136762).
-- The deployment payload validates against the current official RunPod v2 schema.
+The final published image passed real speech requests through public HTTPS with
+the same login cookie used by the browser. An independent CPU Whisper tiny.en
+cross-check matched the words in all three clips:
 
-Public, anonymously pullable image:
+| Check | Audio length | Generation time | Transcript |
+| --- | ---: | ---: | --- |
+| Plain speech | 4.37 s | 7.93 s | Exact normalized words matched |
+| Excited speech | 8.22 s | 12.54 s | Exact normalized words matched |
+| Synthetic voice reference | 3.81 s | 8.08 s | Exact normalized words matched |
 
-`ghcr.io/themonisbig/personaplex-voice:a51dee1947871d662ddc76b46f6270dbf9fd72a5`
+Outputs were finite, non-silent, valid **44,100 Hz WAV** audio. The plain clip was
+reused as reference audio with its transcript for the third request. This verifies
+reference encoding and conditioned synthesis, not subjective voice similarity.
+See the complete requests, results, timestamps and pinned versions in
+[gpu-check.json](gpu-check.json). The repeatable optional test is
+[tests/gpu_quality_check.py](../tests/gpu_quality_check.py).
 
-OCI index digest: `sha256:35dda70e8b9a976c8bff388d2eb56eba7a5cedc48e330d1ef06fa6e06697d2f3`.
+Initial GPU codec decoding failed at 1024 frames due to VRAM exhaustion, including
+with CUDA graphs disabled. The final profile runs the unchanged official DAC
+codec in **FP32 on the cloud CPU**, and keeps the Drama 3 FP8 backbone and tower
+on CUDA with graphs enabled. GPU peak in these requests was about **37.5 GiB**.
+CPU BF16 was too slow on this host, so CPU autocasting is disabled for the codec.
 
-The existing registry name and RunPod secret bindings are retained for reuse.
-See [the RunPod guide](RUNPOD.md) and [upstream versions/license](../UPSTREAM.md).
-The script now defaults to Secure L40 and requires native CUDA 12.8+ inventory.
-Its default spending ceiling stays conservatively at $0.50/hour until explicitly
-raised for a paid creation. GPU synthesis remains unverified.
+A separate 1024-frame stress request also returned a valid 47.55-second WAV in
+71.69 seconds with this adapter before the final image was published. That seeded
+sample reached the frame limit with extra silence; its word accuracy was not
+validated. It establishes memory behavior only. Without a reference, output and
+voice can vary; start with short sentences and retry or supply a clean reference.
+
+## Other verified checks and limits
+
+- **20 CPU tests passed:** secure login/cookies, origin checks across a proxy,
+  streaming, uploads, GPU guards, stock/price ceilings and codec placement.
+- Official TypeScript/Vite production build passed.
+- Chromium at 1280px and 390px passed login, generation POST, WAV playback,
+  downloads and visible errors using fixture audio. These were not GPU model tests.
+- All **137 vendored files** match the pinned official source unchanged.
+- Final CUDA image dependency checks, official CLI, adapter CLI and model imports
+  passed in [GitHub Actions](https://github.com/Themonisbig/translator-/actions/runs/39127537272).
+- The RunPod deployment payload matches the current v2 schema. Native CUDA stock
+  filtering and the spending ceiling prevent incompatible or over-budget creation.
+
+Real GPU speech was checked through HTTPS API requests; browser UI playback was
+checked separately with fixtures. Physical phones, every audio format, long
+paragraphs, concurrent users and subjective acting/voice similarity remain untested.
+
+## Reproducible deployment
+
+Public image, verified anonymously pullable and running on the Pod:
+
+`ghcr.io/themonisbig/personaplex-voice:ed0f50261c992f4d6e2371f6f66f103d2a845beb`
+
+OCI index: `sha256:e73f0a1d0be7f28d1c10e2660c43dc1f443f4db1b4888eb10437d56db5da38e0`.
+
+Normal startup is `python /app/deploy/launch.py`; no temporary model-code override
+is needed. Model weights are cached in `/workspace/checkpoints/drama-3`. Existing
+registry and secret names are retained for reuse. Follow [RUNPOD.md](RUNPOD.md)
+for redeployment, startup, authentication and cleanup, and [UPSTREAM.md](../UPSTREAM.md)
+for exact versions and the Fish Audio Community License.
+
+The failed Community L40S Pod `omzyotzgavt78h` and its empty storage were deleted.
+Its CUDA failure is recorded in [failed-gpu-check.json](failed-gpu-check.json).
+Do not create a second Pod while this one is running.

@@ -1,0 +1,75 @@
+{
+  "pod_id": "v44qwhhq2i3ivi",
+  "model": "fishaudio/drama-3",
+  "model_revision": "b2b5ee998034b2975720906c815e7fb0e9f007bd",
+  "official_source_commit": "541566932abbaebcb0a40e562a1f846738383f38",
+  "image": "ghcr.io/themonisbig/personaplex-voice:ed0f50261c992f4d6e2371f6f66f103d2a845beb",
+  "image_index_digest": "sha256:e73f0a1d0be7f28d1c10e2660c43dc1f443f4db1b4888eb10437d56db5da38e0",
+  "browser_url": "https://v44qwhhq2i3ivi-8080.proxy.runpod.net/ui",
+  "gpu": "NVIDIA L40",
+  "native_host_cuda": "13.0",
+  "gpu_hourly_usd": 0.82,
+  "codec": "official DAC, cloud CPU FP32; Drama 3 backbone and tower on CUDA FP8",
+  "https_cookie_auth_verified": true,
+  "checks": [
+    {
+      "case": "plain",
+      "text": "Hello world. My name is Alex. This is a voice test.",
+      "seed": 1234,
+      "sample_rate": 44100,
+      "audio_seconds": 4.37,
+      "generation_seconds": 7.93,
+      "peak": 0.5215,
+      "transcript": " Hello world. My name is Alex. This is a voice test.",
+      "transcript_matches": true,
+      "generated_at_utc": "2026-10-18T12:42:57Z"
+    },
+    {
+      "case": "energetic",
+      "text": "[excited] Wow, this is amazing! I am so happy today!",
+      "seed": 2026,
+      "sample_rate": 44100,
+      "audio_seconds": 8.22,
+      "generation_seconds": 12.54,
+      "peak": 0.9171,
+      "transcript": " Wow, this is amazing. I am so happy today.",
+      "transcript_matches": true,
+      "generated_at_utc": "2026-10-18T12:43:11Z"
+    },
+    {
+      "case": "reference",
+      "text": "Today is a wonderful day. Welcome to the voice demo.",
+      "seed": 1234,
+      "sample_rate": 44100,
+      "audio_seconds": 3.81,
+      "generation_seconds": 8.08,
+      "peak": 0.5302,
+      "transcript": " Today is a wonderful day. Welcome to the voice demo.",
+      "transcript_matches": true,
+      "generated_at_utc": "2026-10-18T12:43:19Z"
+    }
+  ],
+  "long_clip_memory_stress": {
+    "result": {
+      "model": "fishaudio/drama-3",
+      "public_https": true,
+      "cookie_auth": true,
+      "sample_rate": 44100,
+      "audio_seconds": 47.55,
+      "bytes": 4194348,
+      "peak": 0.6051,
+      "generation_seconds": 71.69,
+      "generated_at_utc": "2026-10-18T12:31:40Z"
+    },
+    "generated_frames": 1024,
+    "semantic_accuracy_verified": false,
+    "image": "ghcr.io/themonisbig/personaplex-voice:a51dee1947871d662ddc76b46f6270dbf9fd72a5",
+    "runtime_override": "deploy/api_server.py and deploy/launch.py from ed0f50261c992f4d6e2371f6f66f103d2a845beb",
+    "note": "This fixed-seed sample reached the frame limit and included extra silence. Use the three transcript-matched checks for word accuracy."
+  },
+  "limitations": [
+    "Transcript cross-checks use CPU Whisper tiny.en and do not measure subjective acting quality or voice similarity.",
+    "Browser playback UI tests used fixture audio at desktop/mobile viewport widths; real GPU speech was checked through the public HTTPS API with browser cookie authentication.",
+    "Physical phones, every audio format, long paragraphs and concurrent users were not validated."
+  ]
+}

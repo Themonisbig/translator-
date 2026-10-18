@@ -124,3 +124,12 @@ requests are blocked even when the hosting proxy rewrites Host.
 To build the image yourself: `bash scripts/build_image.sh` (Docker Buildx, about
 15–25GB free disk). It needs no model token at build time. Inside the container,
 `python /app/deploy/gpu_smoke.py` reruns the real public HTTPS synthesis check.
+
+For optional word-level validation, run `tests/gpu_quality_check.py` from this
+repository using the GPU container's Python and existing runtime secret bindings.
+It generates plain/excited speech plus a new sentence using the first synthetic
+clip as a voice reference. It downloads `openai/whisper-tiny.en` for CPU-only
+transcript cross-checks, asserts normalized words match, and writes
+`/workspace/fish-quality-check.json` and WAV files. Whisper is only a test aid;
+it is not part of the TTS serving process. This optional check needs a running GPU,
+is not included in the CPU-only suite, and does not measure subjective voice similarity.

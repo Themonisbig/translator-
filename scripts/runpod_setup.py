@@ -107,7 +107,7 @@ def main(argv=None):
         if not re.fullmatch(r"[a-zA-Z0-9_-]+", args.status):
             parser.error("Invalid Pod ID")
         pod = request("GET", "/pods/" + args.status, token)
-        print(json.dumps({k: pod.get(k) for k in ("id", "name", "status", "costPerHr")}, indent=2))
+        print(json.dumps({k: pod.get(k) for k in ("id", "name", "status", "cost")}, indent=2))
         print(f"Expected proxy URL (verify in RunPod Connect): https://{args.status}-8080.proxy.runpod.net")
         return 0
     payload = build_payload(args.image, args.gpu, args.hf_secret, args.web_secret, args.cloud)
