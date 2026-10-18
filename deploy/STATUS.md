@@ -13,10 +13,11 @@ libraries, and explicit selection of the allocated GPU. Device mappings and UVM
 nodes were present. No model weights were downloaded and no Drama 3 audio was
 produced. See [failed-gpu-check.json](failed-gpu-check.json).
 
-A native-compatible **Secure L40 at $0.82/hour GPU** is currently listed with host
-CUDA 13.2, 250GB RAM and 32 vCPUs. Planned storage adds about $0.017/hour: roughly
+A native-compatible **Secure L40 at $0.82/hour GPU** was listed with host
+CUDA 13.2, 250GB RAM and 32 vCPUs, but went out of stock on the latest check. Planned storage adds about $0.017/hour: roughly
 $0.84/hour total. It exceeds the approved $0.79/hour GPU cap by $0.03/hour, so no
-replacement has been created without further authorization.
+replacement has been created without further authorization. Matching GPU capacity
+will also need to be rechecked before creation.
 
 Verified without a GPU:
 

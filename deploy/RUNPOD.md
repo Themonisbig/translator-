@@ -15,7 +15,8 @@ Do not enable `--compile` for Drama 3.
 On 2026-10-18, a native-compatible **Secure Cloud L40** was available at
 **$0.82/hour GPU**, with host CUDA 13.2, 250GB host RAM and 32 vCPUs. That exceeds
 the currently approved $0.79/hour GPU ceiling, so the increase needs authorization.
-The cheaper Community listings did not provide a working allocation. Prices and
+That Secure listing subsequently went out of stock. The cheaper Community listings
+did not provide a working allocation. Prices and
 stock change. Check before creating; no higher rate is implicitly approved.
 
 The script requests 80GB persistent `/workspace` (roughly 40GB model weights) and
